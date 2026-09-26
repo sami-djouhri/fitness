@@ -1,0 +1,82 @@
+services:
+  fitness:
+    build: .
+    container_name: fitness
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run
+    ports:
+      - "127.0.0.1:8094:8000"
+    volumes:
+      - fitness-data:/app/data
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - DATABASE_URL=sqlite:////app/data/app.db
+      - MEALPREP_BASE_URL=http://mealprep:8000
+      # Kalender, nur lesend: der Tagestyp entscheidet, ob ein Trainingstag
+      # heute selbstverstaendlich ist. `kalender` loest ueber cc-apps auf,
+      # dasselbe Netz, ueber das mealprep ihn schon erreicht. Ohne Token
+      # bleibt der Adapter still und die App verhaelt sich wie bisher.
+      - KALENDER_BASE_URL=${KALENDER_BASE_URL:-http://kalender:8085}
+      - KALENDER_FEED_TOKEN=${KALENDER_FEED_TOKEN:-}
+      - ADMIN_TOKEN=${ADMIN_TOKEN:-}   # aus .env (git-ignored), F1 Admin-Gate
+      # Native Apps: HS256-Backend-JWT verifizieren (aud=fitness-api). Wert aus
+      # .env (git-ignored), muss == SAGANTA_BACKEND_SECRET des auth-service sein.
+      - SAGANTA_BACKEND_SECRET=${SAGANTA_BACKEND_SECRET:-}
+      # ★ Dieser Dienst hat KEIN env_file. Alles aus .env muss hier einzeln
+      # durchgereicht werden, sonst steht der Wert in der Datei und kommt im
+      # Container nie an. Beim Mandanten-Geheimnis waere das besonders tueckisch:
+      # das Ausrollskript meldet einen Fingerabdruck, der Dienst bliebe still im
+      # ungeprueften Zustand.
+      - FITNESS_TENANT_SECRET=${FITNESS_TENANT_SECRET:-}
+      - TENANT_HEADER_ENFORCE=${TENANT_HEADER_ENFORCE:-0}
+      # Benachrichtigungskanal (optional, siehe app/mqtt.py). Leer = aus, und
+      # der Dienst laeuft unveraendert. Im Haus traegt der bestehende
+      # Broker-Nutzer, es braucht keinen eigenen: die Datei kommt aus dem
+      # Tresor (Notiz infra-mqtt) nach ./secrets/mqtt_password.
+      - MQTT_HOST=${MQTT_HOST:-}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - MQTT_USERNAME=${MQTT_USERNAME:-}
+      - MQTT_PASSWORD_FILE=${MQTT_PASSWORD_FILE:-}
+      # Token fuer POST /api/anstoss/pruefen. Leer = Endpunkt gesperrt.
+      - ANSTOSS_TOKEN=${ANSTOSS_TOKEN:-}
+      # Mandant fuer headerlose interne Aufrufer. Leer = niemand, fail-closed.
+      - DEFAULT_OWNER_SUB=${DEFAULT_OWNER_SUB:-}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    memswap_limit: 256m   # == deploy-Limit -> Swap aus, sauberer OOM statt Host-Thrashing
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+    # ★ `mealprep_net` ist am 2026-09-06 entfallen. Es war ein Alias auf das
+    # Default-Netz des mealprep-Projekts und existierte nur fuer die
+    # Namensaufloesung. Gemessen: `mealprep` loest ueber cc-apps auf (10.210.3.x),
+    # in dem beide Apps ohnehin haengen. Der Alias kostete ein `external`-Netz,
+    # das ein Fremder nicht anlegen kann, weil es aus einem fremden
+    # Compose-Projekt stammt.
+    networks:
+      - default
+      - cc-proxy
+      - cc-apps
+
+volumes:
+  fitness-data:
+
+# ★ Lokal definiert statt `external: true`, damit dieses Compose ueberall laeuft
+# und nicht nur auf dem einen Wirt, der die Bruecken vorher angelegt hat. Die
+# Homelab-Sicht steht in `docker-compose.homelab.yml` und wird dort ueber
+# COMPOSE_FILE in der .env mitgeladen.
+networks:
+  cc-proxy:
+  cc-apps:

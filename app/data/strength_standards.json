@@ -1,0 +1,16 @@
+{
+  "Bankdrücken": { "beginner": 0.5, "intermediate": 1.0, "advanced": 1.5, "elite": 2.0 },
+  "Schrägbankdrücken": { "beginner": 0.4, "intermediate": 0.85, "advanced": 1.3, "elite": 1.7 },
+  "Kniebeugen": { "beginner": 0.65, "intermediate": 1.25, "advanced": 1.85, "elite": 2.5 },
+  "Kreuzheben": { "beginner": 0.75, "intermediate": 1.5, "advanced": 2.0, "elite": 2.75 },
+  "Schulterdrücken": { "beginner": 0.35, "intermediate": 0.65, "advanced": 1.0, "elite": 1.35 },
+  "Langhantelrudern": { "beginner": 0.45, "intermediate": 0.85, "advanced": 1.25, "elite": 1.65 },
+  "Klimmzüge": { "beginner": 0.5, "intermediate": 1.0, "advanced": 1.5, "elite": 2.0 },
+  "Dips": { "beginner": 0.5, "intermediate": 1.0, "advanced": 1.5, "elite": 2.0 },
+  "Rumänisches Kreuzheben": { "beginner": 0.5, "intermediate": 1.0, "advanced": 1.5, "elite": 2.0 },
+  "Beinpresse": { "beginner": 1.0, "intermediate": 2.0, "advanced": 3.0, "elite": 4.0 },
+  "Kurzhantel Bankdrücken": { "beginner": 0.2, "intermediate": 0.45, "advanced": 0.7, "elite": 0.95 },
+  "Kurzhantel Schulterdrücken": { "beginner": 0.15, "intermediate": 0.35, "advanced": 0.55, "elite": 0.75 },
+  "Langhantel Bizeps-Curls": { "beginner": 0.2, "intermediate": 0.4, "advanced": 0.6, "elite": 0.8 },
+  "Frontkniebeugen": { "beginner": 0.5, "intermediate": 1.0, "advanced": 1.5, "elite": 2.0 }
+}

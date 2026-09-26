@@ -1,0 +1,776 @@
+@import './theme.css';
+@import './neu.css';
+@tailwind components;
+@tailwind utilities;
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --bg: #0f172a;
+  --bg-card: #1e293b;
+  --bg-input: #334155;
+  --bg-elevated: #253349;
+  --bg-surface: #1a2536;
+  --text: #f1f5f9;
+  --text-muted: #94a3b8;
+  --border: #334155;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --radius: 8px;
+
+  /* Semantic muscle freshness colors */
+  --muscle-fresh: #22c55e;
+  --muscle-optimal: #4ade80;
+  --muscle-due: #facc15;
+  --muscle-overdue: #f97316;
+  --muscle-neglected: #ef4444;
+
+  /* Soft background variants */
+  --primary-soft: rgba(37, 99, 235, 0.12);
+  --success-soft: rgba(34, 197, 94, 0.12);
+  --warning-soft: rgba(245, 158, 11, 0.12);
+  --danger-soft: rgba(239, 68, 68, 0.12);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+
+  /* Transitions */
+  --transition-fast: 0.12s ease;
+  --transition-normal: 0.2s ease;
+}
+
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  padding-bottom: 64px;
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  font: inherit;
+  border-radius: var(--radius);
+  padding: 8px 16px;
+  transition: background 0.15s;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+.btn-primary:hover { background: var(--primary-dark); }
+
+.btn-secondary {
+  background: var(--bg-input);
+  color: var(--text);
+}
+.btn-secondary:hover { background: var(--border); }
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-sm { padding: 4px 10px; font-size: 0.85rem; }
+
+input, select, textarea {
+  font: inherit;
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  width: 100%;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--primary);
+  border-color: transparent;
+}
+
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.page {
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.page h1 {
+  font-size: 1.4rem;
+  margin-bottom: 16px;
+}
+
+.page h2 {
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  color: var(--text-muted);
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.row > * { flex: 1; }
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 12px;
+  text-align: center;
+}
+
+.stat-card .value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.stat-card .label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.empty {
+  text-align: center;
+  padding: 32px;
+  color: var(--text-muted);
+}
+
+.chip {
+  display: inline-block;
+  background: var(--bg-input);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-16 { margin-bottom: 16px; }
+.gap-8 { gap: 8px; }
+
+/* ------------------------------------------------------------------ */
+/* Muscle Map                                                          */
+/* ------------------------------------------------------------------ */
+
+.muscle-map-container {
+  margin-bottom: 16px;
+}
+
+.muscle-map-mode-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 12px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  width: fit-content;
+}
+
+.mode-btn {
+  background: var(--bg-card);
+  color: var(--text-muted);
+  padding: 8px 24px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 0;
+  border: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.mode-btn.active {
+  background: var(--primary);
+  color: white;
+}
+
+.mode-btn:not(.active):hover {
+  background: var(--bg-input);
+}
+
+.muscle-map-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 8px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  width: fit-content;
+}
+
+.toggle-btn {
+  background: var(--bg-card);
+  color: var(--text-muted);
+  padding: 6px 20px;
+  font-size: 0.85rem;
+  border-radius: 0;
+  border: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.toggle-btn.active {
+  background: var(--primary);
+  color: white;
+}
+
+.toggle-btn:not(.active):hover {
+  background: var(--bg-input);
+}
+
+.muscle-map-body {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  overflow: hidden;
+  position: relative;
+}
+
+.muscle-map-body svg {
+  width: 100%;
+  height: 360px;
+  display: block;
+  border-radius: var(--radius);
+}
+
+.muscle-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(0,0,0,0.88);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.muscle-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 8px 0;
+  justify-content: center;
+}
+
+.muscle-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.muscle-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Region Detail Panel                                                  */
+/* ------------------------------------------------------------------ */
+
+.region-detail {
+  background: var(--bg-card);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.region-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.region-detail-header h3 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.region-detail-close {
+  background: none;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.region-detail-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.region-exercises {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.region-exercise-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-input);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+}
+
+.region-exercise-item .chips {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.exercise-select-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exercise-checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.exercise-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------------ */
+/* Recommendation Cards                                                */
+/* ------------------------------------------------------------------ */
+
+.recommendation-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-left: 3px solid var(--primary);
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+.recommendation-card:active {
+  transform: scale(0.98);
+}
+.recommendation-card:hover {
+  background: var(--bg-elevated);
+}
+
+.recommendation-card .rec-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.recommendation-card .rec-reason {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.recommendation-card .rec-muscles {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* Dashboard compact stats                                             */
+/* ------------------------------------------------------------------ */
+
+.compact-stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.compact-stat {
+  flex: 1;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 10px;
+  text-align: center;
+}
+
+.compact-stat .value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.compact-stat .label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* Achievements                                                       */
+/* ------------------------------------------------------------------ */
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.achievement-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border: 2px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.achievement-card.unlocked {
+  border-color: var(--success);
+  background: linear-gradient(135deg, var(--bg-card) 0%, rgba(34, 197, 94, 0.1) 100%);
+}
+
+.achievement-card.locked {
+  opacity: 0.6;
+  color: var(--text-muted);
+}
+
+.achievement-icon {
+  font-size: 3rem;
+  margin-bottom: 8px;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-input);
+  border-radius: 50%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.achievement-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.achievement-description {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.achievement-unlock-date {
+  font-size: 0.7rem;
+  color: var(--success);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* ------------------------------------------------------------------ */
+/* Hero / Action / Elevated Cards                                      */
+/* ------------------------------------------------------------------ */
+
+.card-hero {
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+  border: 1px solid rgba(37, 99, 235, 0.3);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-md);
+}
+
+.card-action {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+.card-action:active {
+  transform: scale(0.98);
+}
+.card-action:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.card-elevated {
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ------------------------------------------------------------------ */
+/* Animations                                                          */
+/* ------------------------------------------------------------------ */
+
+@keyframes subtlePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeInUp 0.25s ease-out;
+}
+
+/* ------------------------------------------------------------------ */
+/* Status Dot / Chips / Skeleton                                       */
+/* ------------------------------------------------------------------ */
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.chip-compound {
+  display: inline-block;
+  background: var(--success-soft);
+  color: var(--success);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-input) 25%,
+    var(--bg-elevated) 50%,
+    var(--bg-input) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Star Rating (inline)                                                */
+/* ------------------------------------------------------------------ */
+
+.star-rating {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.star-rating-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--border);
+  transition: color var(--transition-fast), transform var(--transition-fast);
+  line-height: 1;
+}
+.star-rating-btn:hover {
+  transform: scale(1.15);
+}
+.star-rating-btn.active {
+  color: var(--warning);
+}
+
+/* ------------------------------------------------------------------ */
+/* Today Training                                                      */
+/* ------------------------------------------------------------------ */
+
+.today-training {
+  margin-bottom: 16px;
+}
+
+.today-training .status-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.today-exercise {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg-input);
+  border-radius: 6px;
+  margin-bottom: 6px;
+  transition: background var(--transition-fast);
+}
+.today-exercise:last-of-type {
+  margin-bottom: 12px;
+}
+
+.today-exercise .ex-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.today-exercise .ex-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 2px;
+}
+
+.today-exercise .ex-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.today-exercise .ex-weight {
+  text-align: right;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  margin-left: 12px;
+}
+
+/* ------------------------------------------------------------------ */
+/* MuscleMap Glow on Selected Region                                   */
+/* ------------------------------------------------------------------ */
+
+.muscle-map-body svg polygon[data-selected="true"] {
+  filter: drop-shadow(0 0 4px rgba(96, 165, 250, 0.5));
+}
+
+/* ------------------------------------------------------------------ */
+/* Overload Suggestion Display                                         */
+/* ------------------------------------------------------------------ */
+
+.overload-suggestion {
+  background: var(--primary-soft);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.overload-values {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+.overload-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.overload-value .unit {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.overload-reason {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.overload-last {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}

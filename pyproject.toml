@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fitness"
+version = "0.1.0"
+description = "Workout tracking, training plans, and progress monitoring."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.109,<1",
+    "uvicorn[standard]>=0.25,<1",
+    "sqlalchemy>=2.0,<3",
+    "alembic>=1.13,<2",
+    "pydantic>=2.5,<3",
+    "pydantic-settings>=2.1,<2.8",
+    "httpx>=0.26,<1",
+    # Optionaler Benachrichtigungskanal (app/mqtt.py). Ohne MQTT_HOST wird
+    # nichts verbunden, die Abhaengigkeit kostet dann nur Plattenplatz.
+    "paho-mqtt>=2.0,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0,<9",
+    "ruff>=0.2,<1",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

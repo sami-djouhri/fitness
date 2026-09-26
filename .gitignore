@@ -1,0 +1,48 @@
+# Secrets
+.env
+.env.*
+secrets.yaml
+secrets/
+
+# SSL
+ssl/
+*.key
+*.pem
+
+# Data
+*.db
+*.sqlite
+*.sqlite3
+# ★ Mit Schraegstrich vorn: gemeint war immer das Laufzeitverzeichnis der
+# SQLite-Datei im Wurzelordner. Ohne ihn fing das Muster auch `app/data/` ab,
+# und damit lag `app/data/strength_standards.json` seit dem ersten Commit
+# NICHT im Repo. Aufgefallen ist das nie, weil das Image die Datei vom
+# Arbeitsbaum mitnimmt: nur ein frischer Klon baut ohne sie, und dann faellt
+# `_get_strength_standards()` still auf ein leeres Verzeichnis zurueck und
+# meldet fuer jede Uebung "Level unbekannt", ohne Fehler.
+/data/
+db-data/
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.bak
+*.bak-*
+
+# Docker
+volumes/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Voices (AI data)
+voices/
+
+# Zigbee
+zigbee.db
