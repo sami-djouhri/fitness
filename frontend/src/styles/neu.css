@@ -111,7 +111,7 @@
 
 .segment button.aktiv {
   background: var(--primary);
-  color: #fff;
+  color: var(--auf-primary);
   font-weight: 600;
 }
 
@@ -490,8 +490,8 @@
   color: var(--text);
 }
 
-.stufe.aktiv { background: var(--primary); color: #fff; }
-.stufe.aktiv em { color: #fff; }
+.stufe.aktiv { background: var(--primary); color: var(--auf-primary); }
+.stufe.aktiv em { color: var(--auf-primary); }
 
 .heatmap {
   display: flex;
@@ -620,7 +620,7 @@
   z-index: 100;
   display: flex;
   justify-content: space-around;
-  background: rgba(20, 29, 46, 0.94);
+  background: rgba(26, 29, 34, 0.94);
   backdrop-filter: blur(10px);
   border-top: 1px solid var(--border);
   padding: 5px 0 max(5px, env(safe-area-inset-bottom));
@@ -645,9 +645,10 @@
 /* ------------------------------------------------------------------ */
 
 .heute-karte {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.22), rgba(37, 99, 235, 0.06));
-  border: 1px solid rgba(37, 99, 235, 0.45);
-  border-radius: 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--text);
+  border-radius: 4px 14px 14px 4px;
   padding: 16px;
   margin-bottom: 14px;
 }
@@ -703,7 +704,7 @@
   font-size: 0.76rem;
 }
 
-.dauerwahl button.aktiv { background: var(--primary); color: #fff; }
+.dauerwahl button.aktiv { background: var(--primary); color: var(--auf-primary); }
 
 /* Warnt, wenn der aktive Plan Geräte verlangt, die nicht eingetragen sind.
    Ohne diesen Hinweis führt der Startknopf in eine Sitzung, in der die
@@ -782,4 +783,4 @@
   font-size: 0.7rem;
 }
 
-.wochentagwahl button.aktiv { background: var(--primary); color: #fff; }
+.wochentagwahl button.aktiv { background: var(--primary); color: var(--auf-primary); }

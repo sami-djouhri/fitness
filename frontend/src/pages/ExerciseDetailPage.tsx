@@ -222,7 +222,7 @@ export default function ExerciseDetailPage() {
           {suggestion.aufwaermsaetze.length > 0 && (
             <div className="overload-last">
               Aufwärmen:{' '}
-              {suggestion.aufwaermsaetze.map((s) => `${s.gewicht_kg} x ${s.wdh}`).join(' , ')}
+              {suggestion.aufwaermsaetze.map((s) => `${s.gewicht_kg} x ${s.wdh}`).join(', ')}
             </div>
           )}
           {suggestion.plateau_seit >= 3 && (

@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import type { WorkoutSet } from '../types';
 import { api } from '../api';
+import Scheiben from './Scheiben';
 
 const SET_TYPE_LABELS: Record<string, string> = {
   normal: '',
@@ -156,16 +157,22 @@ export default function SetRow({ set, onUpdate, onDelete, onToggleCompleted, zie
         {/* Geplante Saetze stehen blass da, bis sie abgehakt sind. Ohne diesen
             Unterschied sieht die vorbefuellte Vorgabe wie eine Leistung aus. */}
         <span
-          style={{ flex: 1, opacity: set.is_completed ? 1 : 0.55 }}
+          style={{ flex: 1, opacity: set.is_completed ? 1 : 0.55, display: 'flex', flexDirection: 'column', gap: 2 }}
           onClick={!readonly ? () => setEditing(true) : undefined}
         >
-          {set.weight_kg != null ? `${set.weight_kg} kg` : '\u2014'}
+          <span className="gewicht">
+            {set.weight_kg != null ? `${set.weight_kg} kg` : '\u2014'}
+          </span>
+          {/* Was das an der Stange bedeutet. Siehe Scheiben.tsx. */}
+          <Scheiben kg={set.weight_kg} knapp />
         </span>
         <span
           style={{ flex: 1, opacity: set.is_completed ? 1 : 0.55 }}
           onClick={!readonly ? () => setEditing(true) : undefined}
         >
-          {set.reps != null ? `${set.reps} Wdh` : set.duration_seconds ? `${set.duration_seconds}s` : '\u2014'}
+          <span className="zahl">
+            {set.reps != null ? `${set.reps} Wdh` : set.duration_seconds ? `${set.duration_seconds}s` : '\u2014'}
+          </span>
         </span>
         <span style={{ width: 50, color: 'var(--text-muted)' }}>
           {set.rpe != null ? `RPE ${set.rpe}` : ''}

@@ -172,7 +172,7 @@ export default function DashboardPage() {
                 {nichtMachbar.length} von {plantag.exercises.length} Übungen
                 brauchen Geräte, die nicht eingetragen sind
               </strong>
-              <div className="klein">{nichtMachbar.join(' , ')}</div>
+              <div className="klein">{nichtMachbar.join(', ')}</div>
               <div className="klein" style={{ marginTop: 6 }}>
                 <Link to="/plans">Plan anpassen</Link>
                 {' oder '}
@@ -193,7 +193,7 @@ export default function DashboardPage() {
         <div className="heute-karte">
           <div className="heute-oberzeile">Vorschlag für heute</div>
           <div className="heute-titel">
-            {einheit.gruppen.length > 0 ? einheit.gruppen.join(' , ') : 'Freies Training'}
+            {einheit.gruppen.length > 0 ? einheit.gruppen.join(', ') : 'Freies Training'}
           </div>
           <div className="dauerwahl">
             {DAUERN.map((d) => (
@@ -235,7 +235,7 @@ export default function DashboardPage() {
             <div style={{ marginBottom: belastet.length ? 10 : 0 }}>
               <strong className="klein">Kommt zu kurz</strong>
               <div className="klein gedaempft">
-                {baustellen.map((g) => `${g.name} (${g.direkt.toFixed(0)} von ${g.mev})`).join(' , ')}
+                {baustellen.map((g) => `${g.name} (${g.direkt.toFixed(0)} von ${g.mev})`).join(', ')}
               </div>
             </div>
           )}
@@ -244,7 +244,7 @@ export default function DashboardPage() {
               <strong className="klein">Noch belastet</strong>
               <div className="klein gedaempft">
                 {belastet.map((f) =>
-                  `${f.name} (wieder bereit in ${Math.round(f.bereit_in_stunden)} h)`).join(' , ')}
+                  `${f.name} (wieder bereit in ${Math.round(f.bereit_in_stunden)} h)`).join(', ')}
               </div>
             </div>
           )}

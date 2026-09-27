@@ -1,4 +1,34 @@
-@import './theme.css';
+/* fitness: der Kraftraum.
+ *
+ * Vorher stand hier die Tailwind-Grundpalette in Reinform (slate-900 als
+ * Grund, blue-600 als Akzent) und darueber ein `theme.css`, das die
+ * App gar nicht benutzte: die Farben wurden zwei Zeilen spaeter
+ * ueberschrieben. Geblieben war nur sein Nebeneffekt, ein Abruf von
+ * fonts.googleapis.com bei jedem Aufruf. Beides ist weg.
+ *
+ * Was statt dessen gilt:
+ *
+ * 1. GUSSEISEN UND KREIDE. Der Grund ist nicht mehr das blaustichige Slate,
+ *    sondern ein warmes Dunkelgrau, wie Hantelscheiben im Kellerlicht. Der
+ *    Text ist Kreide.
+ *
+ * 2. DIE EINZIGE BUNTFARBE IST DAS GEWICHT. Es gibt keinen blauen Knopf
+ *    mehr. Bedienung steht in Kreide auf Eisen. Farbig sind nur zwei Dinge,
+ *    und beide bedeuten etwas: die genormten Scheibenfarben am Gewicht
+ *    (25 rot, 20 blau, 15 gelb, 10 gruen, 5 weiss, 2,5 schwarz, wie im
+ *    Wettkampf) und die Frische-Skala der Muskelgruppen, die es schon gab.
+ *
+ * 3. SCHRIFT AUS DER SACHE. Anybody ist nach Trikotnummern gezeichnet und
+ *    hat eine Breitenachse von 50 bis 150. Sie traegt hier die Zahlen, also
+ *    Gewichte und Wiederholungen, breit und schwer. Der Fliesstext laeuft in
+ *    Hanken Grotesk, ruhig, damit die Zahlen die Lauten bleiben.
+ *
+ * Beide Schriften liegen als npm-Abhaengigkeit im Haus und werden in den
+ * Build gebuendelt. Kein Fremdabruf zur Laufzeit.
+ */
+
+@import '@fontsource-variable/anybody/wdth.css';
+@import '@fontsource-variable/hanken-grotesk/index.css';
 @import './neu.css';
 @tailwind components;
 @tailwind utilities;
@@ -10,49 +40,89 @@
 }
 
 :root {
-  --primary: #2563eb;
-  --primary-dark: #1d4ed8;
-  --bg: #0f172a;
-  --bg-card: #1e293b;
-  --bg-input: #334155;
-  --bg-elevated: #253349;
-  --bg-surface: #1a2536;
-  --text: #f1f5f9;
-  --text-muted: #94a3b8;
-  --border: #334155;
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  /* Gusseisen. Warmes Dunkelgrau statt blaustichigem Slate. */
+  --bg: #15171b;
+  --bg-surface: #1a1d22;
+  --bg-card: #1f232a;
+  --bg-elevated: #272c34;
+  --bg-input: #2b3039;
+  --border: #363c47;
+  --text: #ecedf0;
+  --text-muted: #9ba2ad;
+
+  /* Die Bedienung traegt keine eigene Farbe: Kreide auf Eisen.
+     `--primary` bleibt als Name bestehen, weil beide CSS-Dateien und ein
+     Dutzend Komponenten darauf zeigen. Sein Wert ist jetzt die Kreide. */
+  --primary: #ecedf0;
+  --primary-dark: #ffffff;
+  --primary-soft: rgba(236, 237, 240, 0.10);
+  /* Was auf einer Kreideflaeche steht. Frueher war das `white` auf Blau. */
+  --auf-primary: #15171b;
+
+  --success: #4d9a63;
+  --warning: #c08b2e;
+  --danger: #c2483c;
   --radius: 8px;
 
-  /* Semantic muscle freshness colors */
-  --muscle-fresh: #22c55e;
-  --muscle-optimal: #4ade80;
-  --muscle-due: #facc15;
-  --muscle-overdue: #f97316;
-  --muscle-neglected: #ef4444;
+  /* Frische der Muskelgruppen. Bleibt eine Skala, nur entsaettigt, damit
+     sie neben dem ruhigeren Grund nicht schreit. */
+  --muscle-fresh: #4d9a63;
+  --muscle-optimal: #6cae76;
+  --muscle-due: #c9a03a;
+  --muscle-overdue: #c2762f;
+  --muscle-neglected: #c2483c;
 
-  /* Soft background variants */
-  --primary-soft: rgba(37, 99, 235, 0.12);
-  --success-soft: rgba(34, 197, 94, 0.12);
-  --warning-soft: rgba(245, 158, 11, 0.12);
-  --danger-soft: rgba(239, 68, 68, 0.12);
+  --success-soft: rgba(77, 154, 99, 0.14);
+  --warning-soft: rgba(192, 139, 46, 0.14);
+  --danger-soft: rgba(194, 72, 60, 0.14);
 
-  /* Shadows */
+  /* Wettkampf-Scheibenfarben. Das Farbvokabular des Kraftraums. */
+  --scheibe-25: #c2483c;
+  --scheibe-20: #3a6ea8;
+  --scheibe-15: #c9a03a;
+  --scheibe-10: #4d9a63;
+  --scheibe-5: #d8dade;
+  --scheibe-2: #767d8a;
+
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
 
-  /* Transitions */
   --transition-fast: 0.12s ease;
   --transition-normal: 0.2s ease;
+
+  --schrift: 'Hanken Grotesk Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --schrift-zahl: 'Anybody Variable', 'Hanken Grotesk Variable', system-ui, sans-serif;
 }
 
 html, body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--schrift);
   background: var(--bg);
   color: var(--text);
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Zahlen sind in dieser App der Inhalt, nicht die Beschriftung: Gewicht,
+   Wiederholungen, Saetze. Sie laufen deshalb in Anybody, breit gestellt,
+   und fluchten untereinander. */
+.zahl,
+.stat-value,
+.kennzahl-wert,
+.gewicht,
+.stat-card .value {
+  font-family: var(--schrift-zahl);
+  font-variation-settings: 'wdth' 118, 'wght' 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em;
+}
+
+/* Ueberschriften laufen ebenfalls in Anybody, aber schmaler und leichter
+   als die Zahlen: sie sollen den Raum gliedern, nicht mit den Gewichten um
+   Aufmerksamkeit streiten. */
+h1, h2, h3, .seiten-kopf h1, .seiten-kopf h2 {
+  font-family: var(--schrift-zahl);
+  font-variation-settings: 'wdth' 96, 'wght' 620;
+  letter-spacing: -.012em;
 }
 
 #root {
@@ -62,10 +132,33 @@ html, body {
   padding-bottom: 64px;
 }
 
+/* Links tragen jetzt dieselbe Farbe wie der Text, weil es keine Akzentfarbe
+   mehr gibt.
+   ★ Die Unterstreichung gilt NUR fuer Verweise im Fliesstext. Die erste
+   Fassung setzte sie auf jedes `a`, und weil in dieser App ganze Karten und
+   Listenzeilen Links sind, war danach fast jede Zeile unterstrichen. Eine
+   Flaeche, die man anklicken kann, zeigt das durch ihre Form. */
 a {
-  color: var(--primary);
+  color: var(--text);
   text-decoration: none;
 }
+
+p a,
+li a,
+.hinweis a,
+.fliesstext a,
+a.verweis {
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--transition-fast);
+}
+
+p a:hover,
+li a:hover,
+.hinweis a:hover,
+.fliesstext a:hover,
+a.verweis:hover { text-decoration-color: var(--text); }
 
 button {
   cursor: pointer;
@@ -78,7 +171,8 @@ button {
 
 .btn-primary {
   background: var(--primary);
-  color: white;
+  color: var(--auf-primary);
+  font-weight: 600;
 }
 .btn-primary:hover { background: var(--primary-dark); }
 
@@ -238,7 +332,7 @@ input:focus, select:focus, textarea:focus {
 
 .mode-btn.active {
   background: var(--primary);
-  color: white;
+  color: var(--auf-primary);
 }
 
 .mode-btn:not(.active):hover {
@@ -267,7 +361,7 @@ input:focus, select:focus, textarea:focus {
 
 .toggle-btn.active {
   background: var(--primary);
-  color: white;
+  color: var(--auf-primary);
 }
 
 .toggle-btn:not(.active):hover {
@@ -553,7 +647,7 @@ input:focus, select:focus, textarea:focus {
 
 .card-hero {
   background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
-  border: 1px solid rgba(37, 99, 235, 0.3);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
   margin-bottom: 12px;
@@ -774,3 +868,49 @@ input:focus, select:focus, textarea:focus {
   color: var(--text-muted);
   margin-top: 4px;
 }
+
+/* ------------------------------------------------------------------ */
+/* Scheibenstapel                                                      */
+/* ------------------------------------------------------------------ */
+
+/* Die Ladung einer Stangenseite, in genormten Farben. Steht neben dem
+   Gewicht und ersetzt es nicht: die Zahl bleibt die Wahrheit, der Stapel
+   ist die Handlung. Siehe components/Scheiben.tsx. */
+.scheiben {
+  display: inline-flex;
+  align-items: center;
+  gap: 2.5px;
+  height: 22px;
+  vertical-align: middle;
+}
+
+.scheibe {
+  width: 7px;
+  border-radius: 1.5px;
+  flex-shrink: 0;
+  /* Zwei Kanten, weil die Scheiben an beiden Enden der Helligkeit liegen:
+     innen dunkel, damit die weisse 5-kg-Scheibe eine Kontur hat, aussen
+     hell, damit die dunklen kleinen Scheiben auf dem Eisengrund ueberhaupt
+     zu sehen sind. Mit nur einer Kante verschwand je nach Gewicht die eine
+     oder die andere. */
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, .40),
+    0 0 0 1px rgba(255, 255, 255, .13);
+}
+
+.scheiben-text {
+  font-size: .68rem;
+  color: var(--text-muted);
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+/* Tilde fuer eine Ladung, die mit Normscheiben nicht glatt aufgeht. */
+.scheiben-rest {
+  font-size: .75rem;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+.scheiben.knapp { height: 16px; gap: 2px; }
+.scheiben.knapp .scheibe { width: 5px; }

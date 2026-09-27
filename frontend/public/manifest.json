@@ -4,8 +4,8 @@
   "description": "Workout-Tracking & Fortschritt",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#2563eb",
+  "background_color": "#15171b",
+  "theme_color": "#15171b",
   "orientation": "portrait",
   "icons": [
     {

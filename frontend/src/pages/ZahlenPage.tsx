@@ -269,7 +269,7 @@ export default function ZahlenPage() {
                   Aufwärmen:{' '}
                   {progression.aufwaermsaetze
                     .map((s) => `${s.gewicht_kg} kg x ${s.wdh}`)
-                    .join(' , ')}
+                    .join(', ')}
                 </div>
               )}
             </div>
