@@ -1,0 +1,849 @@
+/* fitness: der Kraftraum.
+ *
+ * Vorher stand hier die Tailwind-Grundpalette in Reinform (slate-900 als
+ * Grund, blue-600 als Akzent) und darueber ein `theme.css`, das die
+ * App gar nicht benutzte: die Farben wurden zwei Zeilen spaeter
+ * ueberschrieben. Geblieben war nur sein Nebeneffekt, ein Abruf von
+ * fonts.googleapis.com bei jedem Aufruf. Beides ist weg.
+ *
+ * Was statt dessen gilt:
+ *
+ * 1. GUSSEISEN UND KREIDE. Der Grund ist nicht mehr das blaustichige Slate,
+ *    sondern ein warmes Dunkelgrau, wie Hantelscheiben im Kellerlicht. Der
+ *    Text ist Kreide.
+ *
+ * 2. DIE EINZIGE BUNTFARBE IST DAS GEWICHT. Es gibt keinen blauen Knopf
+ *    mehr. Bedienung steht in Kreide auf Eisen. Farbig sind nur zwei Dinge,
+ *    und beide bedeuten etwas: die genormten Scheibenfarben am Gewicht
+ *    (25 rot, 20 blau, 15 gelb, 10 gruen, 5 weiss, 2,5 schwarz, wie im
+ *    Wettkampf) und die Frische-Skala der Muskelgruppen, die es schon gab.
+ *
+ * 3. SCHRIFT AUS DER SACHE. Anybody ist nach Trikotnummern gezeichnet und
+ *    hat eine Breitenachse von 50 bis 150. Sie traegt hier die Zahlen, also
+ *    Gewichte und Wiederholungen, breit und schwer. Der Fliesstext laeuft in
+ *    Hanken Grotesk, ruhig, damit die Zahlen die Lauten bleiben.
+ *
+ * Beide Schriften liegen als npm-Abhaengigkeit im Haus und werden in den
+ * Build gebuendelt. Kein Fremdabruf zur Laufzeit.
+ */
+
+@import '@fontsource-variable/anybody/wdth.css';
+@import '@fontsource-variable/hanken-grotesk/index.css';
+@import './neu.css';
+@tailwind components;
+@tailwind utilities;
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Gusseisen. Warmes Dunkelgrau statt blaustichigem Slate. */
+  --bg: #15171b;
+  --bg-surface: #1a1d22;
+  --bg-card: #1f232a;
+  --bg-elevated: #272c34;
+  --bg-input: #2b3039;
+  --border: #363c47;
+  --text: #ecedf0;
+  --text-muted: #9ba2ad;
+
+  /* Die Bedienung traegt keine eigene Farbe: Kreide auf Eisen.
+     `--primary` bleibt als Name bestehen, weil beide CSS-Dateien und ein
+     Dutzend Komponenten darauf zeigen. Sein Wert ist jetzt die Kreide. */
+  --primary: #ecedf0;
+  --primary-dark: #ffffff;
+  --primary-soft: rgba(236, 237, 240, 0.10);
+  /* Was auf einer Kreideflaeche steht. Frueher war das `white` auf Blau. */
+  --auf-primary: #15171b;
+
+  --success: #4d9a63;
+  --warning: #c08b2e;
+  --danger: #c2483c;
+  --radius: 8px;
+
+  /* Frische der Muskelgruppen. Bleibt eine Skala, nur entsaettigt, damit
+     sie neben dem ruhigeren Grund nicht schreit. */
+  --muscle-fresh: #4d9a63;
+  --muscle-optimal: #6cae76;
+  --muscle-due: #c9a03a;
+  --muscle-overdue: #c2762f;
+  --muscle-neglected: #c2483c;
+
+  --success-soft: rgba(77, 154, 99, 0.14);
+  --warning-soft: rgba(192, 139, 46, 0.14);
+  --danger-soft: rgba(194, 72, 60, 0.14);
+
+  /* Wettkampf-Scheibenfarben. Das Farbvokabular des Kraftraums. */
+  --scheibe-25: #c2483c;
+  --scheibe-20: #3a6ea8;
+  --scheibe-15: #c9a03a;
+  --scheibe-10: #4d9a63;
+  --scheibe-5: #d8dade;
+  --scheibe-2: #767d8a;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+
+  --transition-fast: 0.12s ease;
+  --transition-normal: 0.2s ease;
+
+  --schrift: 'Hanken Grotesk Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --schrift-zahl: 'Anybody Variable', 'Hanken Grotesk Variable', system-ui, sans-serif;
+}
+
+html, body {
+  font-family: var(--schrift);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Zahlen sind in dieser App der Inhalt, nicht die Beschriftung: Gewicht,
+   Wiederholungen, Saetze. Sie laufen deshalb in Anybody, breit gestellt,
+   und fluchten untereinander. */
+.zahl,
+.stat-value,
+.kennzahl-wert,
+.gewicht,
+.stat-card .value {
+  font-family: var(--schrift-zahl);
+  font-variation-settings: 'wdth' 118, 'wght' 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em;
+}
+
+/* Ueberschriften laufen ebenfalls in Anybody, aber schmaler und leichter
+   als die Zahlen: sie sollen den Raum gliedern, nicht mit den Gewichten um
+   Aufmerksamkeit streiten. */
+h1, h2, h3, .seiten-kopf h1, .seiten-kopf h2 {
+  font-family: var(--schrift-zahl);
+  font-variation-settings: 'wdth' 96, 'wght' 620;
+  letter-spacing: -.012em;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  padding-bottom: 64px;
+}
+
+/* Links tragen jetzt dieselbe Farbe wie der Text, weil es keine Akzentfarbe
+   mehr gibt.
+   Die Unterstreichung gilt NUR fuer Verweise im Fliesstext. Die erste
+   Fassung setzte sie auf jedes `a`, und weil in dieser App ganze Karten und
+   Listenzeilen Links sind, war danach fast jede Zeile unterstrichen. Eine
+   Flaeche, die man anklicken kann, zeigt das durch ihre Form. */
+a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+p a,
+li a,
+.hinweis a,
+.fliesstext a,
+a.verweis {
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--transition-fast);
+}
+
+p a:hover,
+li a:hover,
+.hinweis a:hover,
+.fliesstext a:hover,
+a.verweis:hover { text-decoration-color: var(--text); }
+
+button {
+  cursor: pointer;
+  border: none;
+  font: inherit;
+  border-radius: var(--radius);
+  padding: 8px 16px;
+  transition: background 0.15s;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--auf-primary);
+  font-weight: 600;
+}
+.btn-primary:hover { background: var(--primary-dark); }
+
+.btn-secondary {
+  background: var(--bg-input);
+  color: var(--text);
+}
+.btn-secondary:hover { background: var(--border); }
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-sm { padding: 4px 10px; font-size: 0.85rem; }
+
+input, select, textarea {
+  font: inherit;
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  width: 100%;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--primary);
+  border-color: transparent;
+}
+
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.page {
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.page h1 {
+  font-size: 1.4rem;
+  margin-bottom: 16px;
+}
+
+.page h2 {
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  color: var(--text-muted);
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.row > * { flex: 1; }
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 12px;
+  text-align: center;
+}
+
+.stat-card .value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.stat-card .label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.empty {
+  text-align: center;
+  padding: 32px;
+  color: var(--text-muted);
+}
+
+.chip {
+  display: inline-block;
+  background: var(--bg-input);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-16 { margin-bottom: 16px; }
+.gap-8 { gap: 8px; }
+
+/* ------------------------------------------------------------------ */
+/* Muscle Map                                                          */
+/* ------------------------------------------------------------------ */
+
+.muscle-map-container {
+  margin-bottom: 16px;
+}
+
+.muscle-map-mode-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 12px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  width: fit-content;
+}
+
+.mode-btn {
+  background: var(--bg-card);
+  color: var(--text-muted);
+  padding: 8px 24px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 0;
+  border: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.mode-btn.active {
+  background: var(--primary);
+  color: var(--auf-primary);
+}
+
+.mode-btn:not(.active):hover {
+  background: var(--bg-input);
+}
+
+.muscle-map-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 8px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  width: fit-content;
+}
+
+.toggle-btn {
+  background: var(--bg-card);
+  color: var(--text-muted);
+  padding: 6px 20px;
+  font-size: 0.85rem;
+  border-radius: 0;
+  border: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.toggle-btn.active {
+  background: var(--primary);
+  color: var(--auf-primary);
+}
+
+.toggle-btn:not(.active):hover {
+  background: var(--bg-input);
+}
+
+.muscle-map-body {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  overflow: hidden;
+  position: relative;
+}
+
+.muscle-map-body svg {
+  width: 100%;
+  height: 360px;
+  display: block;
+  border-radius: var(--radius);
+}
+
+.muscle-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(0,0,0,0.88);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.muscle-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 8px 0;
+  justify-content: center;
+}
+
+.muscle-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.muscle-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Region Detail Panel                                                  */
+/* ------------------------------------------------------------------ */
+
+.region-detail {
+  background: var(--bg-card);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.region-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.region-detail-header h3 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.region-detail-close {
+  background: none;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.region-detail-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.region-exercises {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.region-exercise-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-input);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+}
+
+.region-exercise-item .chips {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.exercise-select-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exercise-checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.exercise-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------------ */
+/* Recommendation Cards                                                */
+/* ------------------------------------------------------------------ */
+
+.recommendation-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-left: 3px solid var(--primary);
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+.recommendation-card:active {
+  transform: scale(0.98);
+}
+.recommendation-card:hover {
+  background: var(--bg-elevated);
+}
+
+.recommendation-card .rec-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.recommendation-card .rec-reason {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.recommendation-card .rec-muscles {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* Dashboard compact stats                                             */
+/* ------------------------------------------------------------------ */
+
+.compact-stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.compact-stat {
+  flex: 1;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 10px;
+  text-align: center;
+}
+
+.compact-stat .value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.compact-stat .label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* Hero / Action / Elevated Cards                                      */
+/* ------------------------------------------------------------------ */
+
+.card-hero {
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-md);
+}
+
+.card-action {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+.card-action:active {
+  transform: scale(0.98);
+}
+.card-action:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.card-elevated {
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ------------------------------------------------------------------ */
+/* Animations                                                          */
+/* ------------------------------------------------------------------ */
+
+@keyframes subtlePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeInUp 0.25s ease-out;
+}
+
+/* ------------------------------------------------------------------ */
+/* Status Dot / Chips / Skeleton                                       */
+/* ------------------------------------------------------------------ */
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.chip-compound {
+  display: inline-block;
+  background: var(--success-soft);
+  color: var(--success);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-input) 25%,
+    var(--bg-elevated) 50%,
+    var(--bg-input) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Star Rating (inline)                                                */
+/* ------------------------------------------------------------------ */
+
+.star-rating {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.star-rating-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--border);
+  transition: color var(--transition-fast), transform var(--transition-fast);
+  line-height: 1;
+}
+.star-rating-btn:hover {
+  transform: scale(1.15);
+}
+.star-rating-btn.active {
+  color: var(--warning);
+}
+
+/* ------------------------------------------------------------------ */
+/* Today Training                                                      */
+/* ------------------------------------------------------------------ */
+
+.today-training {
+  margin-bottom: 16px;
+}
+
+.today-training .status-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.today-exercise {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg-input);
+  border-radius: 6px;
+  margin-bottom: 6px;
+  transition: background var(--transition-fast);
+}
+.today-exercise:last-of-type {
+  margin-bottom: 12px;
+}
+
+.today-exercise .ex-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.today-exercise .ex-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 2px;
+}
+
+.today-exercise .ex-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.today-exercise .ex-weight {
+  text-align: right;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  margin-left: 12px;
+}
+
+/* ------------------------------------------------------------------ */
+/* MuscleMap Glow on Selected Region                                   */
+/* ------------------------------------------------------------------ */
+
+.muscle-map-body svg polygon[data-selected="true"] {
+  filter: drop-shadow(0 0 4px rgba(96, 165, 250, 0.5));
+}
+
+/* ------------------------------------------------------------------ */
+/* Overload Suggestion Display                                         */
+/* ------------------------------------------------------------------ */
+
+.overload-suggestion {
+  background: var(--primary-soft);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.overload-values {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+.overload-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.overload-value .unit {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.overload-reason {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.overload-last {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scheibenstapel                                                      */
+/* ------------------------------------------------------------------ */
+
+/* Die Ladung einer Stangenseite, in genormten Farben. Steht neben dem
+   Gewicht und ersetzt es nicht: die Zahl bleibt die Wahrheit, der Stapel
+   ist die Handlung. Siehe components/Scheiben.tsx. */
+.scheiben {
+  display: inline-flex;
+  align-items: center;
+  gap: 2.5px;
+  height: 22px;
+  vertical-align: middle;
+}
+
+.scheibe {
+  width: 7px;
+  border-radius: 1.5px;
+  flex-shrink: 0;
+  /* Zwei Kanten, weil die Scheiben an beiden Enden der Helligkeit liegen:
+     innen dunkel, damit die weisse 5-kg-Scheibe eine Kontur hat, aussen
+     hell, damit die dunklen kleinen Scheiben auf dem Eisengrund ueberhaupt
+     zu sehen sind. Mit nur einer Kante verschwand je nach Gewicht die eine
+     oder die andere. */
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, .40),
+    0 0 0 1px rgba(255, 255, 255, .13);
+}
+
+.scheiben-text {
+  font-size: .68rem;
+  color: var(--text-muted);
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+/* Tilde fuer eine Ladung, die mit Normscheiben nicht glatt aufgeht. */
+.scheiben-rest {
+  font-size: .75rem;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+.scheiben.knapp { height: 16px; gap: 2px; }
+.scheiben.knapp .scheibe { width: 5px; }

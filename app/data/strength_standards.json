@@ -1,0 +1,153 @@
+{
+  "_hinweis": [
+    "Kraftstandards: geschaetztes 1RM als Vielfaches des Koerpergewichts, je Stufe.",
+    "Zwei Nachschlagewege auf dieselbe Groesse. 'uebungen' ist der genauere und",
+    "gewinnt; 'muster' deckt den Rest des Katalogs ueber das Bewegungsmuster.",
+    "Der Namensweg allein reichte nicht: von 167 Katalog-Uebungen trugen 14",
+    "einen Standard, und bei einem Nutzer mit Kurzhanteln und Klimmzugstange",
+    "traf davon KEINE einzige. Vier Schluessel passten ausserdem auf keine",
+    "Uebung, weil sie sich um einen Bindestrich oder die Wortfolge unterschieden",
+    "(siehe 'aliase'). Ein Standard, der nie greift, sieht aus wie Deckung.",
+    "Bei Kurzhanteln ist der Wert PRO HAND. Das steht nicht nur hier als",
+    "Vorsatz, es steckt schon in den Zahlen: 'Kurzhantel-Bankdruecken' liegt bei",
+    "0,45 des Langhantelwerts, also knapp unter der Haelfte. Wer die Angabe als",
+    "Gesamtgewicht liest, schlaegt das Doppelte vor.",
+    "Werte der Grunduebungen sind veroeffentlichte Standards. Die Werte der",
+    "Isolationsuebungen sind daraus abgeleitete Naeherungen; sie sind ein",
+    "Startpunkt und werden vom ersten erfassten Satz abgeloest."
+  ],
+
+  "stufen": ["beginner", "intermediate", "advanced", "elite"],
+
+  "uebungen": {
+    "Bankdrücken":            {"beginner": 0.5,  "intermediate": 1.0,  "advanced": 1.5,  "elite": 2.0},
+    "Schrägbankdrücken":      {"beginner": 0.4,  "intermediate": 0.85, "advanced": 1.3,  "elite": 1.7},
+    "Kniebeugen":             {"beginner": 0.65, "intermediate": 1.25, "advanced": 1.85, "elite": 2.5},
+    "Kreuzheben":             {"beginner": 0.75, "intermediate": 1.5,  "advanced": 2.0,  "elite": 2.75},
+    "Schulterdrücken":        {"beginner": 0.35, "intermediate": 0.65, "advanced": 1.0,  "elite": 1.35},
+    "Langhantelrudern":       {"beginner": 0.45, "intermediate": 0.85, "advanced": 1.25, "elite": 1.65},
+    "Klimmzüge":              {"beginner": 0.5,  "intermediate": 1.0,  "advanced": 1.5,  "elite": 2.0},
+    "Dips":                   {"beginner": 0.5,  "intermediate": 1.0,  "advanced": 1.5,  "elite": 2.0},
+    "Rumänisches Kreuzheben": {"beginner": 0.5,  "intermediate": 1.0,  "advanced": 1.5,  "elite": 2.0},
+    "Beinpresse":             {"beginner": 1.0,  "intermediate": 2.0,  "advanced": 3.0,  "elite": 4.0},
+    "Kurzhantel-Bankdrücken": {"beginner": 0.2,  "intermediate": 0.45, "advanced": 0.7,  "elite": 0.95},
+    "Kurzhantel-Schulterdrücken": {"beginner": 0.15, "intermediate": 0.35, "advanced": 0.55, "elite": 0.75},
+    "Bizeps-Curls Langhantel":{"beginner": 0.2,  "intermediate": 0.4,  "advanced": 0.6,  "elite": 0.8},
+    "Frontkniebeugen":        {"beginner": 0.5,  "intermediate": 1.0,  "advanced": 1.5,  "elite": 2.0},
+
+    "_ein_gewicht_zwei_haende": "Die vier darunter werden mit EINER Kurzhantel in beiden Haenden ausgefuehrt. Der Musterweg wuerde sie pro Hand rechnen und damit etwa das Doppelte vorschlagen.",
+    "Goblet-Kniebeugen":      {"beginner": 0.25, "intermediate": 0.45, "advanced": 0.65, "elite": 0.85},
+    "Kurzhantel-Überzüge":    {"beginner": 0.15, "intermediate": 0.28, "advanced": 0.42, "elite": 0.55},
+    "Kurzhantel-Überzüge liegend": {"beginner": 0.15, "intermediate": 0.28, "advanced": 0.42, "elite": 0.55},
+    "Französisches Drücken":  {"beginner": 0.14, "intermediate": 0.26, "advanced": 0.4,  "elite": 0.52},
+    "Überkopf-Trizepsdrücken":{"beginner": 0.14, "intermediate": 0.26, "advanced": 0.4,  "elite": 0.52}
+  },
+
+  "aliase": {
+    "_hinweis": "Immer Katalogname -> Schluessel in 'uebungen', nie umgekehrt: nachgeschlagen wird mit dem Namen, der an der Uebung steht. Drei Schluessel hiessen bis 2026-10-24 wie der Standard und nicht wie die Uebung ('Kurzhantel Schulterdrücken' gegen 'Kurzhantel-Schulterdrücken', 'Langhantel Bizeps-Curls' gegen 'Bizeps-Curls Langhantel'); sie sind jetzt auf den Katalognamen umbenannt. Wer einen Standard von einer Webseite uebernimmt, uebernimmt dessen Schreibweise und faellt in dieselbe Falle, ohne dass etwas bricht.",
+    "Klimmzüge Obergriff": "Klimmzüge",
+    "Klimmzüge Untergriff": "Klimmzüge",
+    "Klimmzüge neutraler Griff": "Klimmzüge",
+    "Breite Klimmzüge": "Klimmzüge",
+    "Klimmzüge mit Zusatzgewicht": "Klimmzüge"
+  },
+
+  "muster": {
+    "_hinweis": "Bewegungsmuster -> Geraetefamilie -> Stufe. Greift, wenn der Name keinen Standard hat, und deckt damit auch selbst angelegte Uebungen, weil die ein Muster tragen.",
+
+    "druecken_horizontal": {
+      "langhantel": {"beginner": 0.5,  "intermediate": 1.0,  "advanced": 1.5,  "elite": 2.0},
+      "kurzhantel": {"beginner": 0.2,  "intermediate": 0.45, "advanced": 0.7,  "elite": 0.95},
+      "maschine":   {"beginner": 0.45, "intermediate": 0.9,  "advanced": 1.35, "elite": 1.8},
+      "kabel":      {"beginner": 0.35, "intermediate": 0.7,  "advanced": 1.05, "elite": 1.4}
+    },
+    "druecken_schraeg": {
+      "langhantel": {"beginner": 0.4,  "intermediate": 0.85, "advanced": 1.3,  "elite": 1.7},
+      "kurzhantel": {"beginner": 0.18, "intermediate": 0.38, "advanced": 0.58, "elite": 0.78},
+      "maschine":   {"beginner": 0.38, "intermediate": 0.78, "advanced": 1.18, "elite": 1.55}
+    },
+    "druecken_vertikal": {
+      "langhantel": {"beginner": 0.35, "intermediate": 0.65, "advanced": 1.0,  "elite": 1.35},
+      "kurzhantel": {"beginner": 0.15, "intermediate": 0.35, "advanced": 0.55, "elite": 0.75},
+      "maschine":   {"beginner": 0.3,  "intermediate": 0.6,  "advanced": 0.9,  "elite": 1.2}
+    },
+    "beugen_knie": {
+      "langhantel": {"beginner": 0.65, "intermediate": 1.25, "advanced": 1.85, "elite": 2.5},
+      "kurzhantel": {"beginner": 0.18, "intermediate": 0.35, "advanced": 0.55, "elite": 0.75},
+      "maschine":   {"beginner": 1.0,  "intermediate": 2.0,  "advanced": 3.0,  "elite": 4.0}
+    },
+    "ausfallschritt": {
+      "langhantel": {"beginner": 0.3,  "intermediate": 0.6,  "advanced": 0.9,  "elite": 1.2},
+      "kurzhantel": {"beginner": 0.12, "intermediate": 0.25, "advanced": 0.4,  "elite": 0.55}
+    },
+    "hueftstreckung": {
+      "langhantel": {"beginner": 0.75, "intermediate": 1.5,  "advanced": 2.0,  "elite": 2.75},
+      "kurzhantel": {"beginner": 0.2,  "intermediate": 0.4,  "advanced": 0.6,  "elite": 0.8},
+      "maschine":   {"beginner": 0.6,  "intermediate": 1.2,  "advanced": 1.8,  "elite": 2.4}
+    },
+    "ziehen_horizontal": {
+      "langhantel": {"beginner": 0.45, "intermediate": 0.85, "advanced": 1.25, "elite": 1.65},
+      "kurzhantel": {"beginner": 0.2,  "intermediate": 0.4,  "advanced": 0.6,  "elite": 0.8},
+      "maschine":   {"beginner": 0.45, "intermediate": 0.85, "advanced": 1.25, "elite": 1.65},
+      "kabel":      {"beginner": 0.4,  "intermediate": 0.8,  "advanced": 1.2,  "elite": 1.6}
+    },
+    "ziehen_vertikal": {
+      "maschine":   {"beginner": 0.45, "intermediate": 0.85, "advanced": 1.25, "elite": 1.65},
+      "kabel":      {"beginner": 0.45, "intermediate": 0.85, "advanced": 1.25, "elite": 1.65}
+    },
+    "armbeugen": {
+      "langhantel": {"beginner": 0.2,  "intermediate": 0.4,  "advanced": 0.6,  "elite": 0.8},
+      "kurzhantel": {"beginner": 0.1,  "intermediate": 0.2,  "advanced": 0.3,  "elite": 0.4},
+      "maschine":   {"beginner": 0.15, "intermediate": 0.3,  "advanced": 0.45, "elite": 0.6},
+      "kabel":      {"beginner": 0.15, "intermediate": 0.3,  "advanced": 0.45, "elite": 0.6}
+    },
+    "armstrecken": {
+      "langhantel": {"beginner": 0.15, "intermediate": 0.3,  "advanced": 0.45, "elite": 0.6},
+      "kurzhantel": {"beginner": 0.08, "intermediate": 0.16, "advanced": 0.25, "elite": 0.34},
+      "maschine":   {"beginner": 0.15, "intermediate": 0.3,  "advanced": 0.45, "elite": 0.6},
+      "kabel":      {"beginner": 0.15, "intermediate": 0.3,  "advanced": 0.45, "elite": 0.6}
+    },
+    "fliegende": {
+      "kurzhantel": {"beginner": 0.08, "intermediate": 0.16, "advanced": 0.26, "elite": 0.35},
+      "maschine":   {"beginner": 0.12, "intermediate": 0.24, "advanced": 0.38, "elite": 0.5},
+      "kabel":      {"beginner": 0.1,  "intermediate": 0.2,  "advanced": 0.32, "elite": 0.43}
+    },
+    "reverse_fly": {
+      "kurzhantel": {"beginner": 0.05, "intermediate": 0.1,  "advanced": 0.16, "elite": 0.22},
+      "maschine":   {"beginner": 0.08, "intermediate": 0.17, "advanced": 0.26, "elite": 0.35},
+      "kabel":      {"beginner": 0.08, "intermediate": 0.16, "advanced": 0.25, "elite": 0.33}
+    },
+    "seitheben": {
+      "kurzhantel": {"beginner": 0.06, "intermediate": 0.12, "advanced": 0.2,  "elite": 0.27},
+      "maschine":   {"beginner": 0.08, "intermediate": 0.17, "advanced": 0.26, "elite": 0.35},
+      "kabel":      {"beginner": 0.06, "intermediate": 0.12, "advanced": 0.2,  "elite": 0.27},
+      "langhantel": {"beginner": 0.15, "intermediate": 0.3,  "advanced": 0.45, "elite": 0.6}
+    },
+    "frontheben": {
+      "kurzhantel": {"beginner": 0.05, "intermediate": 0.11, "advanced": 0.18, "elite": 0.24},
+      "kabel":      {"beginner": 0.05, "intermediate": 0.11, "advanced": 0.18, "elite": 0.24},
+      "langhantel": {"beginner": 0.12, "intermediate": 0.25, "advanced": 0.38, "elite": 0.5}
+    },
+    "wade": {
+      "langhantel": {"beginner": 0.5,  "intermediate": 1.0,  "advanced": 1.5,  "elite": 2.0},
+      "kurzhantel": {"beginner": 0.2,  "intermediate": 0.4,  "advanced": 0.65, "elite": 0.88},
+      "maschine":   {"beginner": 0.6,  "intermediate": 1.2,  "advanced": 1.9,  "elite": 2.55}
+    },
+    "rotation": {
+      "kurzhantel": {"beginner": 0.08, "intermediate": 0.16, "advanced": 0.26, "elite": 0.35},
+      "kabel":      {"beginner": 0.12, "intermediate": 0.25, "advanced": 0.38, "elite": 0.5}
+    },
+    "rumpfbeugen": {
+      "kurzhantel": {"beginner": 0.08, "intermediate": 0.16, "advanced": 0.26, "elite": 0.35},
+      "kabel":      {"beginner": 0.15, "intermediate": 0.3,  "advanced": 0.45, "elite": 0.6},
+      "maschine":   {"beginner": 0.15, "intermediate": 0.3,  "advanced": 0.45, "elite": 0.6}
+    }
+  },
+
+  "geschlechtsfaktor": {
+    "_hinweis": "Dieselben Vielfachen gelten nicht fuer alle. Der Faktor haengt am Koerperteil, weil der Unterschied oben deutlich groesser ist als unten. 'keine_angabe' und 'divers' nehmen bewusst die Mitte: der Maennerwert waere fuer etwa die Haelfte der Nutzer zu hoch, und ein zu schwerer erster Satz ist der teurere Fehler.",
+    "oben": {"m": 1.0, "w": 0.65, "divers": 0.83, "keine_angabe": 0.83},
+    "unten": {"m": 1.0, "w": 0.78, "divers": 0.89, "keine_angabe": 0.89},
+    "rumpf": {"m": 1.0, "w": 0.7, "divers": 0.85, "keine_angabe": 0.85}
+  }
+}
