@@ -34,6 +34,11 @@ export default function WorkoutPage() {
   const [pendingWorkout, setPendingWorkout] = useState<{ plan_day_id?: number; name?: string; exercise_ids?: number[]; uebungen?: StartUebung[] } | null>(null);
   const [namensAbfrage, setNamensAbfrage] = useState<string | null>(null);
   const [startingWorkout, setStartingWorkout] = useState(false);
+  const [ladeFehler, setLadeFehler] = useState<string | null>(null);
+  /** Gerade geloeschter Satz, solange „Rückgängig“ noch geht. */
+  const [geloescht, setGeloescht] = useState<{ satz: WorkoutSet; stelle: number } | null>(null);
+  const geloeschtRef = useRef<{ satz: WorkoutSet; stelle: number } | null>(null);
+  const loeschWecker = useRef<ReturnType<typeof setTimeout>>();
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const isNew = !id;
 
@@ -62,7 +67,10 @@ export default function WorkoutPage() {
 
   useEffect(() => {
     if (id) {
-      loadWorkout(parseInt(id));
+      // Ohne Abfangen blieb die Seite bei einem Fehler für immer auf
+      // „Laden...“ stehen, auch ohne Netz im Gym.
+      setLadeFehler(null);
+      loadWorkout(parseInt(id)).catch((e) => setLadeFehler(String(e instanceof Error ? e.message : e)));
     } else {
       api.get<PlanListItem[]>('/plans').then(setPlans);
       // Dieselbe Auskunft wie auf der Startseite, seit dem 2026-10-24.
@@ -363,13 +371,66 @@ export default function WorkoutPage() {
     }
   }
 
-  async function deleteSet(setId: number) {
-    setWorkout(prev => prev ? { ...prev, sets: prev.sets.filter(s => s.id !== setId) } : prev);
-    await api.delRobust(`/workouts/sets/${setId}`);
+  /**
+   * Loeschen mit Rueckgaengig (Entscheid 2026-11-08): der Satz
+   * verschwindet sofort, an den Dienst geht das Loeschen erst nach 5 s, beim
+   * naechsten Loeschen, beim Beenden oder beim Verlassen der Seite.
+   *
+   * Bewusst aufgeschoben statt geloescht und wieder angelegt: ein neu
+   * angelegter Satz bekaeme eine neue Kennung und ein neues `completed_at`,
+   * und `_check_prs` liefe ein zweites Mal, ein Rekord truege dann die Zeit
+   * des Rueckgaengig. Aufgeschoben erfaehrt der Dienst von einem
+   * zurueckgenommenen Loeschen nie etwas.
+   */
+  function loeschenAbschicken() {
+    clearTimeout(loeschWecker.current);
+    const offen = geloeschtRef.current;
+    geloeschtRef.current = null;
+    setGeloescht(null);
+    if (offen) return api.delRobust(`/workouts/sets/${offen.satz.id}`);
+    return Promise.resolve();
   }
+
+  function deleteSet(setId: number) {
+    if (!workout) return;
+    void loeschenAbschicken();
+    const stelle = workout.sets.findIndex(s => s.id === setId);
+    if (stelle < 0) return;
+    const eintrag = { satz: workout.sets[stelle], stelle };
+    geloeschtRef.current = eintrag;
+    setGeloescht(eintrag);
+    setWorkout(prev => prev ? { ...prev, sets: prev.sets.filter(s => s.id !== setId) } : prev);
+    loeschWecker.current = setTimeout(() => { void loeschenAbschicken(); }, 5000);
+  }
+
+  function loeschenZuruecknehmen() {
+    clearTimeout(loeschWecker.current);
+    const offen = geloeschtRef.current;
+    geloeschtRef.current = null;
+    setGeloescht(null);
+    if (!offen) return;
+    setWorkout(prev => {
+      if (!prev) return prev;
+      const sets = [...prev.sets];
+      sets.splice(Math.min(offen.stelle, sets.length), 0, offen.satz);
+      return { ...prev, sets };
+    });
+  }
+
+  // Seite verlassen (anderer Reiter, App schliessen): ein offenes Loeschen
+  // geht sofort raus, sonst stuende der Satz beim naechsten Laden wieder da.
+  useEffect(() => {
+    const beimVerlassen = () => { void loeschenAbschicken(); };
+    window.addEventListener('pagehide', beimVerlassen);
+    return () => {
+      window.removeEventListener('pagehide', beimVerlassen);
+      beimVerlassen();
+    };
+  }, []);
 
   async function finishWorkout() {
     if (!workout) return;
+    await loeschenAbschicken();
     await api.post(`/workouts/${workout.id}/finish`);
     setShowRating(true);
   }
@@ -410,6 +471,8 @@ export default function WorkoutPage() {
             <button
               key={star}
               className={`star-rating-btn ${star <= ratingValue ? 'active' : ''}`}
+              aria-label={`${star} von 5 Sternen`}
+              aria-pressed={star === ratingValue}
               onClick={() => setRatingValue(star)}
             >
               
@@ -475,6 +538,7 @@ export default function WorkoutPage() {
           <button
             className="btn-secondary btn-sm"
             onClick={() => setPendingWorkout(null)}
+            aria-label="Zurück"
           >
             &larr;
           </button>
@@ -536,7 +600,20 @@ export default function WorkoutPage() {
     );
   }
 
-  if (!workout) return <div className="page fade-in">Laden...</div>;
+  if (!workout && ladeFehler) {
+    return (
+      <div className="page fade-in">
+        <div className="leer">
+          Die Einheit ließ sich nicht laden ({ladeFehler}).{' '}
+          <button className="btn-secondary btn-sm" onClick={() => {
+            setLadeFehler(null);
+            loadWorkout(parseInt(id!)).catch((e) => setLadeFehler(String(e instanceof Error ? e.message : e)));
+          }}>Erneut versuchen</button>
+        </div>
+      </div>
+    );
+  }
+  if (!workout) return <div className="page fade-in"><div className="leer">Lädt …</div></div>;
 
   // Group sets by exercise
   const exerciseGroups: { exerciseId: number; name: string; sets: typeof workout.sets; groupId: string | null }[] = [];
@@ -599,8 +676,8 @@ export default function WorkoutPage() {
                 <div style={{ fontSize: '1.1rem' }}>
                   {['\u{1F4AA}', '\u{1F60A}', '\u{1F610}', '\u{1F634}', '\u{1F635}'][workout.fatigue_level - 1]}
                 </div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                  {['Frisch', 'Gut', 'Normal', 'Muede', 'Erschoepft'][workout.fatigue_level - 1]}
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  {['Frisch', 'Gut', 'Normal', 'Müde', 'Erschöpft'][workout.fatigue_level - 1]}
                 </div>
               </div>
             )}
@@ -609,8 +686,8 @@ export default function WorkoutPage() {
                 <div style={{ fontSize: '1.1rem' }}>
                   {['\u{1F62B}', '\u{1F615}', '\u{1F610}', '\u{1F60C}', '\u{1F31F}'][workout.sleep_quality - 1]}
                 </div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                  Schlaf: {['Schlecht', 'Maessig', 'OK', 'Gut', 'Sehr gut'][workout.sleep_quality - 1]}
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Schlaf: {['Schlecht', 'Mäßig', 'OK', 'Gut', 'Sehr gut'][workout.sleep_quality - 1]}
                 </div>
               </div>
             )}
@@ -619,7 +696,7 @@ export default function WorkoutPage() {
                 <div style={{ fontSize: '1.1rem' }}>
                   {['\u{1F612}', '\u{1F614}', '\u{1F610}', '\u{1F642}', '\u{1F525}'][workout.motivation - 1]}
                 </div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                   Motivation: {['Niedrig', 'Gering', 'Mittel', 'Hoch', 'Max'][workout.motivation - 1]}
                 </div>
               </div>
@@ -649,14 +726,14 @@ export default function WorkoutPage() {
               <div>
                 <strong>{g.name}</strong>
                 {vorgabeFuer(g.exerciseId) && (
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                     {vorgabeText(g.exerciseId)}
                     {' \u00b7 '}
                     {g.sets.filter(s => s.is_completed).length}/{g.sets.length} erledigt
                   </div>
                 )}
                 {isInSuperset && (
-                  <div style={{ fontSize: '0.7rem', color: 'var(--warning)', fontWeight: 600 }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--warning)', fontWeight: 600 }}>
                     Supersatz mit {ssPartnerName}
                   </div>
                 )}
@@ -667,7 +744,7 @@ export default function WorkoutPage() {
                     <select
                       className="btn-secondary btn-sm"
                       aria-label="Supersatz mit einer anderen Übung"
-                      style={{ fontSize: '0.9rem', padding: '0 2px', minHeight: 36, width: 44 }}
+                      style={{ fontSize: '0.9rem', padding: '0 2px', minHeight: 44, width: 44 }}
                       onChange={e => {
                         if (e.target.value) toggleSuperset(g.exerciseId, parseInt(e.target.value));
                         e.target.value = '';
@@ -689,7 +766,7 @@ export default function WorkoutPage() {
                     className="btn-secondary btn-sm"
                     aria-label="Satz hinzufügen"
                     title="Satz hinzufügen"
-                    style={{ fontSize: '1.1rem', padding: '0 2px', minHeight: 36, width: 44 }}
+                    style={{ fontSize: '1.1rem', padding: '0 2px', minHeight: 44, width: 44 }}
                     onChange={e => { if (e.target.value) addSet(g.exerciseId, e.target.value, g.groupId ?? undefined); e.target.value = ''; }}
                     defaultValue=""
                   >
@@ -757,6 +834,13 @@ export default function WorkoutPage() {
           onSelect={onExerciseSelected}
           onClose={() => setShowPicker(false)}
         />
+      )}
+
+      {geloescht && (
+        <div className="rueckgaengig-leiste" role="status">
+          <span>Satz gelöscht</span>
+          <button type="button" onClick={loeschenZuruecknehmen}>Rückgängig</button>
+        </div>
       )}
 
       {restTimer && (

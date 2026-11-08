@@ -6,6 +6,7 @@ import type {
   Profil, TrainingJetzt,
 } from '../types';
 import { startzustand, ziel } from '../trainingjetzt';
+import { dez } from '../zahlformat';
 
 /**
  * Heute: eine Frage, eine Antwort, ein Knopf.
@@ -125,6 +126,7 @@ export default function DashboardPage() {
           <div className="dauerwahl">
             {knoepfe.map((d) => (
               <button key={d} className={aktiveDauer === d ? 'aktiv' : ''}
+                      aria-pressed={aktiveDauer === d}
                       onClick={() => setDauer(d)}>
                 {d} min
               </button>
@@ -144,7 +146,7 @@ export default function DashboardPage() {
                   <Link to={`/exercises/${u.exercise_id}`} style={{ color: 'inherit' }}>
                     {u.name}
                   </Link>
-                  {u.ergaenzt && <span className="etikett" style={{ marginLeft: 6 }}>ergänzt</span>}
+                  {u.ergaenzt && <span className="etikett leise" style={{ marginLeft: 6 }}>ergänzt</span>}
                 </span>
                 <span className="ziel">
                   {ziel(u)}
@@ -264,7 +266,7 @@ export default function DashboardPage() {
                 <div className="klein gedaempft">
                   {pr.pr_type === 'max_reps'
                     ? `${pr.value} Wiederholungen`
-                    : `${pr.value.toFixed(1)} kg`}
+                    : `${dez(pr.value)} kg`}
                 </div>
               </div>
               <span className="etikett gruen">neu</span>

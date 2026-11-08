@@ -64,8 +64,13 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(
       fetch(request)
         .then((antwort) => {
-          const kopie = antwort.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put('/', kopie));
+          // Nur eine echte Seite ablegen. Sonst ersetzt eine 502 waehrend
+          // eines Neustarts (oder eine Umleitung zur Anmeldung) die App im
+          // Speicher, und im Funkloch startet dann die Fehlerseite.
+          if (antwort.ok && antwort.type === 'basic') {
+            const kopie = antwort.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put('/', kopie));
+          }
           return antwort;
         })
         .catch(() => caches.match('/'))

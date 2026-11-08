@@ -104,7 +104,7 @@ export default function ReadinessInsights() {
           <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--success)' }}>
             {formatVolume(data.sleep_correlation.high_avg_volume)}
           </div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             &Oslash; Volumen ({data.sleep_correlation.high_workout_count} Workouts)
           </div>
         </div>
@@ -121,7 +121,7 @@ export default function ReadinessInsights() {
           <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--danger)' }}>
             {formatVolume(data.sleep_correlation.low_avg_volume)}
           </div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             &Oslash; Volumen ({data.sleep_correlation.low_workout_count} Workouts)
           </div>
         </div>
@@ -143,7 +143,7 @@ export default function ReadinessInsights() {
           <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--success)' }}>
             {formatVolume(data.fatigue_correlation.low_avg_volume)}
           </div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             &Oslash; Volumen ({data.fatigue_correlation.low_workout_count} Workouts)
           </div>
         </div>
@@ -160,7 +160,7 @@ export default function ReadinessInsights() {
           <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--danger)' }}>
             {formatVolume(data.fatigue_correlation.high_avg_volume)}
           </div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             &Oslash; Volumen ({data.fatigue_correlation.high_workout_count} Workouts)
           </div>
         </div>

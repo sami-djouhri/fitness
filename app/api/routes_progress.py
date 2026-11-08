@@ -144,6 +144,8 @@ def aktivitaetsniveau(db: Session = Depends(get_db)):
         trainings_im_fenster=n.trainings_im_fenster,
         fenster_tage=n.fenster_tage,
         belastbar=n.belastbar,
+        schritte_schnitt=n.schritte_schnitt,
+        durch_schritte=n.durch_schritte,
         # Uebertragen gilt als erledigt, wenn nichts mehr faellig ist. Bei zu
         # wenig Daten ist das nie faellig, dann ist auch nichts uebertragen.
         an_mealprep_uebertragen=n.belastbar and not aktivitaet.uebertragen_faellig(db, n),

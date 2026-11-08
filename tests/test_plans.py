@@ -83,3 +83,14 @@ def test_update_plan_exercise(client):
     }).json()
     r = client.put(f"/api/plans/day-exercises/{pe['id']}", json={"target_sets": 5})
     assert r.json()["target_sets"] == 5
+
+
+def test_tag_wieder_rotierend(client):
+    """null heisst rotierend; ein fehlendes Feld laesst den Wochentag stehen."""
+    p = client.post("/api/plans", json={"name": "Test"}).json()
+    d = client.post(f"/api/plans/{p['id']}/days", json={"name": "Push", "day_of_week": 2}).json()
+    r = client.put(f"/api/plans/days/{d['id']}", json={"name": "Push A"})
+    assert r.json()["day_of_week"] == 2
+    r = client.put(f"/api/plans/days/{d['id']}", json={"day_of_week": None})
+    assert r.json()["day_of_week"] is None
+    assert r.json()["name"] == "Push A"

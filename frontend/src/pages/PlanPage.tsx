@@ -96,15 +96,17 @@ export default function PlanPage() {
       )}
 
       {plaene.map((p) => (
-        <div key={p.id} className="karte flach" style={{ cursor: 'pointer' }}
-             onClick={() => ladePlan(p.id)}>
-          <div>
+        // Ein Knopf statt eines anklickbaren div: so erreicht man den Plan
+        // auch mit der Tastatur, und ein Bildschirmleser nennt ihn als Knopf.
+        <button key={p.id} type="button" className="karte flach zeilenknopf"
+                onClick={() => ladePlan(p.id)}>
+          <span>
             <strong>{p.name}</strong>
             {p.is_active && <span className="etikett gruen" style={{ marginLeft: 8 }}>aktiv</span>}
-            {p.description && <div className="klein gedaempft">{p.description}</div>}
-          </div>
+            {p.description && <span className="klein gedaempft" style={{ display: 'block' }}>{p.description}</span>}
+          </span>
           <span className="klein gedaempft">{p.day_count} Tage</span>
-        </div>
+        </button>
       ))}
 
       <h2>Vorlagen</h2>

@@ -22,6 +22,7 @@ from app.api.routes_analyse import router as analyse_router
 from app.api.routes_profil import router as profil_router
 from app.api.routes_jetzt import router as jetzt_router
 from app.api.routes_schritte import router as schritte_router
+from app.api.routes_masse import router as masse_router
 from app.db import SessionLocal
 from app.domain import DomainError
 import app.tenant  # noqa: F401  (registriert das Multi-Tenant-Scoping fuer Session-Events)
@@ -138,6 +139,7 @@ app.include_router(anstoss_router)
 app.include_router(analyse_router)
 app.include_router(profil_router)
 app.include_router(schritte_router)
+app.include_router(masse_router)
 app.include_router(jetzt_router)
 
 

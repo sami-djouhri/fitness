@@ -21,6 +21,7 @@ from app.models import (
     PlanDay,
     PlanExercise,
     Tagesschritte,
+    Koerpermass,
     Workout,
     WorkoutSet,
 )
@@ -41,6 +42,7 @@ TENANT_MODELS = (
     AnstossMerker,
     Nutzerprofil,
     Tagesschritte,
+    Koerpermass,
 )
 
 

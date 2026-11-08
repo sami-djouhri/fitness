@@ -17,6 +17,18 @@
  */
 
 const SPEICHER_SCHLUESSEL = 'fitness-warteschlange-v1';
+const ZAEHLER_SCHLUESSEL = 'fitness-ersatznummer-v1';
+const ABGELEHNT_SCHLUESSEL = 'fitness-warteschlange-abgelehnt-v1';
+/** So viele abgelehnte Auftraege bleiben zum Nachsehen liegen. */
+const ABGELEHNT_MAX = 50;
+
+/** Ein Auftrag, den der Dienst fachlich abgelehnt hat (4xx). */
+export interface Abgelehnt extends Auftrag {
+  status: number;
+  /** Was der Dienst dazu sagte, gekuerzt. */
+  meldung: string;
+  am: string;
+}
 
 export interface Auftrag {
   id: string;
@@ -30,7 +42,6 @@ export interface Auftrag {
 type IdAufloesung = (ersatzId: number, echteId: number) => void;
 type Beobachter = (anzahl: number) => void;
 
-let naechsteErsatzId = -1;
 const beobachter = new Set<Beobachter>();
 const aufloeser = new Set<IdAufloesung>();
 let laeuft = false;
@@ -71,8 +82,71 @@ export function aufIdAufloesung(a: IdAufloesung): () => void {
   return () => aufloeser.delete(a);
 }
 
+/**
+ * Die naechste freie Ersatznummer.
+ *
+ * Steht im Speicher und nicht nur im laufenden Programm. Bis 2026-11-03
+ * begann der Zaehler nach jedem Neuladen wieder bei -1; mit Service Worker
+ * laedt die Seite auch im Funkloch neu, und zwei Saetze teilten sich dann eine
+ * Nummer. Beim Nachtragen landeten die Aenderungen des zweiten beim ersten.
+ * Zusaetzlich unter jeder Nummer, die noch in der Schlange steht, damit auch
+ * eine Schlange aus der Zeit davor nicht kollidiert.
+ */
 export function naechsteErsatznummer(): number {
-  return naechsteErsatzId--;
+  let naechste = -1;
+  try {
+    const gespeichert = Number(localStorage.getItem(ZAEHLER_SCHLUESSEL));
+    if (Number.isInteger(gespeichert) && gespeichert < 0) naechste = gespeichert;
+  } catch {
+    // ohne Speicher bleibt es bei der Untergrenze aus der Schlange
+  }
+  for (const a of lesen()) {
+    if (a.ersatzId != null && a.ersatzId <= naechste) naechste = a.ersatzId - 1;
+    for (const treffer of a.path.matchAll(/\/(-\d+)(?=\/|\?|$)/g)) {
+      const n = Number(treffer[1]);
+      if (n <= naechste) naechste = n - 1;
+    }
+  }
+  try {
+    localStorage.setItem(ZAEHLER_SCHLUESSEL, String(naechste - 1));
+  } catch {
+    // s. o.
+  }
+  return naechste;
+}
+
+/** Nur fuer die Tests: ein Neuladen der Seite hat keinen Zustand im Modul. */
+export function __nurFuerTests_neuLaden(): void {
+  laeuft = false;
+}
+
+/** Was der Dienst abgelehnt hat, juengstes zuletzt. */
+export function abgelehnt(): Abgelehnt[] {
+  try {
+    const rohtext = localStorage.getItem(ABGELEHNT_SCHLUESSEL);
+    return rohtext ? (JSON.parse(rohtext) as Abgelehnt[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function abgelehntLeeren(): void {
+  try {
+    localStorage.removeItem(ABGELEHNT_SCHLUESSEL);
+  } catch {
+    // nichts zu tun
+  }
+  beobachter.forEach(b => b(anzahlWartend()));
+}
+
+function ablegen(auftrag: Auftrag, status: number, meldung: string): void {
+  const liste = [...abgelehnt(), { ...auftrag, status, meldung: meldung.slice(0, 300), am: new Date().toISOString() }];
+  try {
+    localStorage.setItem(ABGELEHNT_SCHLUESSEL, JSON.stringify(liste.slice(-ABGELEHNT_MAX)));
+  } catch {
+    // Voller Speicher: dann wenigstens in der Konsole.
+    console.warn('Auftrag abgelehnt und nicht ablegbar', auftrag, status, meldung);
+  }
 }
 
 export function einreihen(auftrag: Omit<Auftrag, 'id'>): void {
@@ -83,12 +157,15 @@ export function einreihen(auftrag: Omit<Auftrag, 'id'>): void {
 
 /** Ersetzt eine Ersatz-Nummer in allen noch wartenden Auftraegen. */
 function ersatzNummerErsetzen(auftraege: Auftrag[], ersatzId: number, echteId: number): Auftrag[] {
-  const alt = `/${ersatzId}`;
-  const neu = `/${echteId}`;
+  // Nur ein ganzes Pfadstueck. Bis 2026-11-03 stand hier ein Textersatz
+  // von `/-1`, und der traf auch `/-12`: aus `/workouts/sets/-12` wurde
+  // `/workouts/sets/1012`, ein fremder Satz oder ein 404, und die Aenderung
+  // war weg. Ab zehn offline angelegten Saetzen der Normalfall.
+  const muster = new RegExp(`/${ersatzId}(?=/|\\?|$)`, 'g');
   return auftraege.map(a => ({
     ...a,
     // Pfade wie /workouts/sets/-3 oder /workouts/-1/sets
-    path: a.path.includes(alt) ? a.path.split(alt).join(neu) : a.path,
+    path: a.path.replace(muster, `/${echteId}`),
     body: a.body ? ersatzNummerImBody(a.body, ersatzId, echteId) : a.body,
   }));
 }
@@ -105,13 +182,24 @@ function ersatzNummerImBody(body: unknown, ersatzId: number, echteId: number): u
   return body;
 }
 
+/** Antworten, nach denen ein spaeterer Versuch gelingen kann. */
+function voruebergehend(status: number): boolean {
+  return status >= 500 || status === 408 || status === 425 || status === 429;
+}
+
 /**
  * Traegt die Warteschlange nach. Bricht beim ersten Netzfehler ab und laesst
  * den Rest stehen, damit die Reihenfolge erhalten bleibt.
  *
  * Ein fachlicher Fehler (4xx) ist etwas anderes als ein Netzfehler: der
- * Auftrag wird nie durchgehen und wird verworfen, sonst blockiert er die
- * Schlange fuer immer.
+ * Auftrag wird nie durchgehen und wird aus der Schlange genommen, sonst
+ * blockiert er sie fuer immer. Er wird abgelegt ([abgelehnt]), nicht
+ * weggeworfen: bis 2026-11-03 verschwand er ohne jede Spur.
+ *
+ * Ein 5xx ist KEIN fachlicher Fehler. Bis 2026-11-03 wurde auch er
+ * verworfen; ein Neustart des Dienstes waehrend des Nachtragens (502 vom
+ * Proxy) leerte damit den Rest eines Trainings. Ebenso eine umgeleitete
+ * Antwort: das ist die Anmeldeseite, nicht der Dienst.
  */
 export async function abspielen(): Promise<{ erledigt: number; verworfen: number }> {
   if (laeuft) return { erledigt: 0, verworfen: 0 };
@@ -135,6 +223,8 @@ export async function abspielen(): Promise<{ erledigt: number; verworfen: number
         break; // weiter offline, spaeter erneut
       }
 
+      if (voruebergehend(antwort.status) || antwort.redirected) break;
+
       let rest = auftraege.slice(1);
 
       if (antwort.ok && auftrag.ersatzId != null) {
@@ -146,8 +236,13 @@ export async function abspielen(): Promise<{ erledigt: number; verworfen: number
         }
       }
 
-      if (antwort.ok) erledigt++;
-      else verworfen++;
+      if (antwort.ok) {
+        erledigt++;
+      } else {
+        verworfen++;
+        const meldung = await antwort.json().then(d => JSON.stringify(d)).catch(() => '');
+        ablegen(auftrag, antwort.status, meldung);
+      }
 
       schreiben(rest);
     }

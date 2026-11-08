@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
+import KoerpermasseBereich from '../components/Koerpermasse';
 import type { Faerbung } from '../components/Koerpermodell';
 import type {
   Exercise, Registry, Muskelgruppe, Muskel, Muskelstand, Gruppenfrische,
@@ -336,7 +337,7 @@ export default function KoerperPage() {
             </label>
           </div>
 
-          {laedt && <div className="gedaempft klein">Laden...</div>}
+          {laedt && <div className="gedaempft klein">Lädt …</div>}
           {!laedt && sichtbar.length === 0 && (
             <div className="leer">
               Keine Übung für diese Auswahl.
@@ -380,7 +381,8 @@ export default function KoerperPage() {
                   <button
                     className="zeilen-haken"
                     onClick={() => umschalten(ex)}
-                    aria-label={aus ? 'Übung einbeziehen' : 'Übung ausblenden'}
+                    aria-label={aus ? `${ex.name} einbeziehen` : `${ex.name} ausblenden`}
+                    aria-pressed={!aus}
                   >
                     {aus ? '☐' : '☑'}
                   </button>
@@ -403,13 +405,15 @@ export default function KoerperPage() {
                   <div className="anteil-balken" title={`Anteil ${Math.round(anteil * 100)} %`}>
                     <div style={{ width: `${Math.round(anteil * 100)}%` }} />
                   </div>
-                  <Link className="zeilen-pfeil" to={`/exercises/${ex.id}`}>›</Link>
+                  <Link className="zeilen-pfeil" to={`/exercises/${ex.id}`} aria-label={`${ex.name} öffnen`}>›</Link>
                 </li>
               );
             })}
           </ul>
         </div>
       )}
+
+      <KoerpermasseBereich />
     </div>
   );
 }

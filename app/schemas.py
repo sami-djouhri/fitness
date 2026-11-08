@@ -222,6 +222,10 @@ class AktivitaetsniveauOut(BaseModel):
     trainings_im_fenster: int
     fenster_tage: int
     an_mealprep_uebertragen: bool = False
+    #: Schritte je Tag im Schnitt (Health Connect), None ohne genug Tage.
+    schritte_schnitt: int | None = None
+    #: Ob die Schritte die Stufe angehoben haben (seit 2026-11-07).
+    durch_schritte: bool = False
     # Genug erfasst, um daraus einen Kalorienbedarf abzuleiten. False heisst:
     # die Stufe unten ist eine Rechnung, aber keine Aussage.
     belastbar: bool = False
@@ -867,4 +871,41 @@ class SchritteUebersichtOut(BaseModel):
     schnitt: int | None = None
     aktive_tage: int = 0
     erfasste_tage: int = 0
+
+
+# ---------------------------------------------------------------------------
+# Koerpermasse (seit 2026-11-07)
+# ---------------------------------------------------------------------------
+
+class MassdefinitionOut(BaseModel):
+    id: str
+    name: str
+    anleitung: str
+    seite: str
+    bereich: str
+
+
+class MassStand(BaseModel):
+    wert_cm: float
+    datum: date
+    # Der Wert davor, fuer die Veraenderung; None beim ersten Messen.
+    vorher_cm: float | None = None
+    vorher_datum: date | None = None
+
+
+class KoerpermasseOut(BaseModel):
+    allgemein: str
+    definitionen: list[MassdefinitionOut]
+    aktuell: dict[str, MassStand]
+
+
+class MessdurchgangIn(BaseModel):
+    datum: date
+    # Kennung -> Umfang in cm; fehlende Masse bleiben unberuehrt.
+    werte: dict[str, float]
+
+
+class MasspunktOut(BaseModel):
+    datum: date
+    wert_cm: float
 

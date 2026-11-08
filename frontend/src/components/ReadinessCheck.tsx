@@ -72,7 +72,7 @@ function ScaleSelector({
             }}
           >
             <span style={{ fontSize: '1.3rem' }}>{opt.emoji}</span>
-            <span style={{ fontSize: '0.65rem', fontWeight: value === opt.value ? 600 : 400 }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: value === opt.value ? 600 : 400 }}>
               {opt.label}
             </span>
           </button>

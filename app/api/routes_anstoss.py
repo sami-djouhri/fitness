@@ -13,6 +13,7 @@ Uebungsname mit drei Anfuehrungszeichen fuehrte dort Code aus. Jetzt ruft ein
 systemd-Timer nur noch diesen Endpunkt.
 """
 
+import hmac
 import logging
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
@@ -33,7 +34,7 @@ def _token_pruefen(x_anstoss_token: str | None = Header(None)) -> None:
             status_code=503,
             detail="ANSTOSS_TOKEN ist nicht gesetzt, der Endpunkt ist gesperrt",
         )
-    if x_anstoss_token != settings.ANSTOSS_TOKEN:
+    if not hmac.compare_digest((x_anstoss_token or "").encode(), settings.ANSTOSS_TOKEN.encode()):
         raise HTTPException(status_code=401, detail="Token ungültig")
 
 

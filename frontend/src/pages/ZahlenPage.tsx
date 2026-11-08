@@ -3,11 +3,13 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   LineChart, Line, Legend,
 } from 'recharts';
+import { Link } from 'react-router-dom';
 import { api } from '../api';
 import type {
   Gruppenwoche, PersonalRecord, VolumeSummary, CalendarDay,
-  Schritteuebersicht, Exercise, StrengthLevel, Progressionsvorschlag,
+  Schritteuebersicht, Exercise, StrengthLevel, Progressionsvorschlag, WorkoutListItem,
 } from '../types';
+import { dez, zahl } from '../zahlformat';
 
 /**
  * Zahlen statt Abzeichen.
@@ -18,7 +20,7 @@ import type {
  * Muskelgruppe abbekommt, gemessen am Bereich, in dem sie wächst.
  */
 
-type Abschnitt = 'woche' | 'verlauf' | 'kraft' | 'alltag';
+type Abschnitt = 'woche' | 'verlauf' | 'kraft' | 'alltag' | 'einheiten';
 
 const BEWERTUNGSFARBE: Record<string, string> = {
   unter_mv: '#ef4444',
@@ -131,7 +133,7 @@ export default function ZahlenPage() {
 
       <div className="segment breit">
         {([['woche', 'Diese Woche'], ['verlauf', 'Verlauf'],
-           ['kraft', 'Kraft'], ['alltag', 'Alltag']] as [Abschnitt, string][])
+           ['kraft', 'Kraft'], ['alltag', 'Alltag'], ['einheiten', 'Einheiten']] as [Abschnitt, string][])
           .map(([k, t]) => (
             <button key={k} className={abschnitt === k ? 'aktiv' : ''}
                     onClick={() => setAbschnitt(k)}>{t}</button>
@@ -166,7 +168,7 @@ export default function ZahlenPage() {
               <div className="klein gedaempft">
                 {g.direkt.toFixed(0)} direkt
                 {g.gewichtet > g.direkt && (
-                  <> &middot; {g.gewichtet.toFixed(1)} mit Mitarbeit</>
+                  <> &middot; {dez(g.gewichtet)} mit Mitarbeit</>
                 )}
                 {g.volumen_kg > 0 && (
                   <> &middot; {Math.round(g.volumen_kg).toLocaleString('de')} kg</>
@@ -194,10 +196,10 @@ export default function ZahlenPage() {
             <ResponsiveContainer width="100%" height={260}>
               <LineChart data={verlaufFuerDiagramm(verlauf)}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="woche" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
-                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                <XAxis dataKey="woche" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
+                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
                 <Tooltip contentStyle={diagrammKasten} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Line type="monotone" dataKey="gesamt" name="Sätze gesamt"
                       stroke="var(--primary)" strokeWidth={2} dot={false} />
               </LineChart>
@@ -210,8 +212,8 @@ export default function ZahlenPage() {
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={volumen}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="week_start" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
-                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                <XAxis dataKey="week_start" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
+                <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
                 <Tooltip contentStyle={diagrammKasten} />
                 <Bar dataKey="total_volume" name="kg" fill="var(--primary)" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -242,7 +244,7 @@ export default function ZahlenPage() {
               <strong>Nächstes Mal</strong>
               <div className="vorschlagszeile">
                 {progression.gewicht_kg != null && (
-                  <span className="grossezahl">{progression.gewicht_kg} kg</span>
+                  <span className="grossezahl">{zahl(progression.gewicht_kg)} kg</span>
                 )}
                 {progression.wdh != null && (
                   <span className="grossezahl">
@@ -256,7 +258,7 @@ export default function ZahlenPage() {
               <p className="klein">{progression.begruendung}</p>
               {progression.e1rm != null && (
                 <div className="klein gedaempft">
-                  Geschätztes Maximum: {progression.e1rm} kg
+                  Geschätztes Maximum: {zahl(progression.e1rm)} kg
                   {progression.e1rm_unsicher && (
                     <span className="warnung">
                       {' '}(aus vielen Wiederholungen geschätzt, daher unscharf)
@@ -268,7 +270,7 @@ export default function ZahlenPage() {
                 <div className="klein gedaempft">
                   Aufwärmen:{' '}
                   {progression.aufwaermsaetze
-                    .map((s) => `${s.gewicht_kg} kg x ${s.wdh}`)
+                    .map((s) => `${zahl(s.gewicht_kg)} kg x ${s.wdh}`)
                     .join(', ')}
                 </div>
               )}
@@ -279,9 +281,9 @@ export default function ZahlenPage() {
             <div className="karte">
               <strong>Einordnung: {kraftstand.level}</strong>
               <div className="klein gedaempft">
-                {kraftstand.current_1rm.toFixed(1)} kg bei{' '}
-                {kraftstand.body_weight?.toFixed(1)} kg Körpergewicht
-                {kraftstand.ratio != null && <> ({kraftstand.ratio.toFixed(2)}-faches)</>}
+                {dez(kraftstand.current_1rm)} kg bei{' '}
+                {kraftstand.body_weight != null ? dez(kraftstand.body_weight) : '?'} kg Körpergewicht
+                {kraftstand.ratio != null && <> ({dez(kraftstand.ratio, 2)}-faches)</>}
               </div>
               <div className="stufenleiste">
                 {Object.entries(kraftstand.levels).map(([stufe, faktor]) => (
@@ -311,6 +313,9 @@ export default function ZahlenPage() {
         </>
       )}
 
+      {/* ------------------------------------------------------- Einheiten */}
+      {abschnitt === 'einheiten' && <Einheiten />}
+
       {/* ---------------------------------------------------------- Alltag */}
       {abschnitt === 'alltag' && (
         <>
@@ -330,8 +335,8 @@ export default function ZahlenPage() {
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={schritte.tage}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="datum" tick={{ fill: 'var(--text-muted)', fontSize: 9 }} />
-                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                  <XAxis dataKey="datum" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
+                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
                   <Tooltip contentStyle={diagrammKasten} />
                   <Bar dataKey="schritte" fill="#38bdf8" radius={[3, 3, 0, 0]} />
                 </BarChart>
@@ -408,7 +413,7 @@ function rekordText(pr: PersonalRecord): string {
   };
   const wert = pr.pr_type === 'max_reps'
     ? `${pr.value} Wdh`
-    : `${pr.value.toFixed(1)} kg`;
+    : `${dez(pr.value)} kg`;
   return `${namen[pr.pr_type] ?? pr.pr_type}: ${wert}`;
 }
 
@@ -455,5 +460,69 @@ function Heatmap({ tage }: { tage: CalendarDay[] }) {
         </div>
       ))}
     </div>
+  );
+}
+
+/**
+ * Vergangene Einheiten: ansehen und loeschen, wie in der App (Gleichstand
+ * 2026-11-07). Geladen wird erst, wenn der Reiter offen ist; die Liste
+ * braucht sonst niemand.
+ */
+function Einheiten() {
+  const [liste, setListe] = useState<WorkoutListItem[] | null>(null);
+  const [fehler, setFehler] = useState<string | null>(null);
+
+  const laden = () => {
+    setFehler(null);
+    api.get<WorkoutListItem[]>('/workouts?limit=100')
+      .then(setListe)
+      .catch((e) => setFehler(String(e)));
+  };
+  useEffect(laden, []);
+
+  const loeschen = async (w: WorkoutListItem) => {
+    const wann = new Date(w.started_at).toLocaleDateString('de-DE');
+    if (!confirm(`„${w.name}“ vom ${wann} mit ${w.set_count} Sätzen löschen? Das lässt sich nicht zurücknehmen.`)) return;
+    try {
+      await api.del(`/workouts/${w.id}`);
+      setListe((l) => (l ?? []).filter((x) => x.id !== w.id));
+    } catch (e) {
+      setFehler(`Löschen ging nicht: ${String(e)}`);
+    }
+  };
+
+  if (fehler) {
+    return (
+      <div className="leer">
+        {fehler} <button className="btn-secondary btn-sm" onClick={laden}>Erneut versuchen</button>
+      </div>
+    );
+  }
+  if (liste === null) return <div className="leer">Lädt …</div>;
+  if (liste.length === 0) return <div className="leer">Noch keine Einheit erfasst.</div>;
+
+  return (
+    <>
+      <h2>Einheiten</h2>
+      {liste.map((w) => (
+        <div key={w.id} className="karte flach">
+          <Link to={`/workout/${w.id}`} style={{ flex: 1, color: 'inherit', textDecoration: 'none' }}>
+            <strong>{w.name}</strong>
+            <div className="klein gedaempft">
+              {new Date(w.started_at).toLocaleString('de-DE', {
+                weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit',
+              })}
+              {' · '}{w.set_count} {w.set_count === 1 ? 'Satz' : 'Sätze'}
+              {w.finished_at ? '' : ' · läuft noch'}
+            </div>
+          </Link>
+          <button className="knopf-loeschen klein" onClick={() => loeschen(w)}
+                  aria-label={`${w.name} vom ${new Date(w.started_at).toLocaleDateString('de-DE')} löschen`}>
+            Löschen
+          </button>
+        </div>
+      ))}
+    </>
   );
 }

@@ -464,3 +464,21 @@ class Tagesschritte(Base):
     )
 
 
+
+
+class Koerpermass(Base):
+    """Ein Umfang an einem Tag (seit 2026-11-07, Entscheid: 13 Masse,
+    Arme und Beine je Seite). Eigene Tabelle statt Spalten an ``BodyMetric``:
+    ein Messdurchgang findet oft ohne Wiegen statt, und dort ist das Gewicht
+    Pflicht. Welche Masse es gibt, steht in ``app/services/koerpermasse.py``."""
+
+    __tablename__ = "koerpermass"
+    __table_args__ = (
+        UniqueConstraint("owner_sub", "datum", "mass", name="uq_koerpermass_owner_datum_mass"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    owner_sub: Mapped[str] = _owner_col()
+    datum: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    mass: Mapped[str] = mapped_column(String(30), nullable=False)
+    wert_cm: Mapped[float] = mapped_column(Float, nullable=False)

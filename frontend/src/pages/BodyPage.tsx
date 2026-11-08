@@ -96,7 +96,7 @@ export default function BodyPage() {
             {niveau.begruendung}
           </div>
           {niveau.belastbar && !niveau.an_mealprep_uebertragen && (
-            <div style={{ fontSize: '0.7rem', color: 'var(--warning)', marginTop: 4 }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--warning)', marginTop: 4 }}>
               Wird nach dem nächsten beendeten Training an MealPrep übertragen
             </div>
           )}
@@ -112,25 +112,25 @@ export default function BodyPage() {
             {ziele.kcal != null && (
               <div>
                 <div style={{ fontSize: '1.15rem', fontWeight: 700 }}>{Math.round(ziele.kcal)}</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>kcal</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>kcal</div>
               </div>
             )}
             {ziele.protein_g != null && (
               <div>
                 <div style={{ fontSize: '1.15rem', fontWeight: 700 }}>{Math.round(ziele.protein_g)} g</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Protein</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Protein</div>
               </div>
             )}
             {ziele.carbs_g != null && (
               <div>
                 <div style={{ fontSize: '1.15rem', fontWeight: 700 }}>{Math.round(ziele.carbs_g)} g</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Kohlenhydrate</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Kohlenhydrate</div>
               </div>
             )}
             {ziele.fat_g != null && (
               <div>
                 <div style={{ fontSize: '1.15rem', fontWeight: 700 }}>{Math.round(ziele.fat_g)} g</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Fett</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Fett</div>
               </div>
             )}
           </div>
@@ -141,27 +141,27 @@ export default function BodyPage() {
         <form onSubmit={handleSubmit} className="card mb-16">
           <div className="row">
             <div className="form-group">
-              <label>Datum</label>
-              <input type="date" name="date" defaultValue={today} required />
+              <label htmlFor="messung-date">Datum</label>
+              <input type="date" id="messung-date" name="date" defaultValue={today} required />
             </div>
             <div className="form-group">
-              <label>Gewicht (kg)</label>
-              <input type="number" name="weight_kg" step="0.1" required />
+              <label htmlFor="messung-weight_kg">Gewicht (kg)</label>
+              <input type="number" id="messung-weight_kg" name="weight_kg" step="0.1" required />
             </div>
           </div>
           <div className="row">
             <div className="form-group">
-              <label>KFA (%)</label>
-              <input type="number" name="body_fat_pct" step="0.1" />
+              <label htmlFor="messung-body_fat_pct">KFA (%)</label>
+              <input type="number" id="messung-body_fat_pct" name="body_fat_pct" step="0.1" />
             </div>
             <div className="form-group">
-              <label>Bauchumfang (cm)</label>
-              <input type="number" name="waist_cm" step="0.1" />
+              <label htmlFor="messung-waist_cm">Bauchumfang (cm)</label>
+              <input type="number" id="messung-waist_cm" name="waist_cm" step="0.1" />
             </div>
           </div>
           <div className="form-group">
-            <label>Notizen</label>
-            <input name="notes" />
+            <label htmlFor="messung-notes">Notizen</label>
+            <input id="messung-notes" name="notes" />
           </div>
           <button type="submit" className="btn-primary" style={{ width: '100%' }}>Speichern</button>
         </form>
@@ -188,14 +188,15 @@ export default function BodyPage() {
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis
                 dataKey="date"
-                tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
                 tickFormatter={v => {
                   const d = new Date(v);
                   return `${d.getDate()}.${d.getMonth() + 1}`;
                 }}
               />
-              <YAxis yAxisId="weight" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
-              <YAxis yAxisId="fat" orientation="right" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} unit="%" />
+              <YAxis yAxisId="weight" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} domain={['auto', 'auto']}
+                     tickFormatter={(v: number) => v.toLocaleString('de-DE')} />
+              <YAxis yAxisId="fat" orientation="right" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} unit="%" />
               <Tooltip
                 contentStyle={{
                   background: 'var(--bg-card)',
@@ -206,7 +207,7 @@ export default function BodyPage() {
               />
               <Legend />
               <Line yAxisId="weight" type="monotone" dataKey="weight_kg" stroke="var(--primary)" name="Gewicht (kg)" dot={false} strokeWidth={2} />
-              <Bar yAxisId="fat" dataKey="body_fat_pct" fill="rgba(249,115,22,0.5)" name="KFA (%)" radius={[2, 2, 0, 0]} />
+              <Bar yAxisId="fat" dataKey="body_fat_pct" fill="var(--saganta-kupfer)" fillOpacity={0.55} name="KFA (%)" radius={[2, 2, 0, 0]} />
             </ComposedChart>
           </ResponsiveContainer>
         </>
@@ -220,13 +221,14 @@ export default function BodyPage() {
             <div>
               <strong>{new Date(m.date).toLocaleDateString('de-DE')}</strong>
               <div style={{ fontSize: '0.85rem' }}>
-                {m.weight_kg} kg
-                {m.body_fat_pct != null && ` • ${m.body_fat_pct}% KFA`}
-                {m.waist_cm != null && ` • ${m.waist_cm} cm`}
+                {m.weight_kg.toLocaleString('de-DE')} kg
+                {m.body_fat_pct != null && ` • ${m.body_fat_pct.toLocaleString('de-DE')} % KFA`}
+                {m.waist_cm != null && ` • ${m.waist_cm.toLocaleString('de-DE')} cm`}
               </div>
               {m.notes && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{m.notes}</div>}
             </div>
-            <button className="btn-danger btn-sm" onClick={() => deleteMetric(m.id)}>&times;</button>
+            <button className="knopf-loeschen" onClick={() => deleteMetric(m.id)}
+                    aria-label={`Messung vom ${new Date(m.date).toLocaleDateString('de-DE')} löschen`}>&times;</button>
           </div>
         ))}
       </div>

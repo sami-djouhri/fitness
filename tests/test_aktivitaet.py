@@ -245,3 +245,55 @@ def test_endpunkt_zeigt_die_kette(client, db_session):
     assert daten["trainings_pro_woche"] == 4.0
     assert daten["fenster_tage"] == 28
     assert daten["an_mealprep_uebertragen"] is False
+
+
+# --- Schritte (seit 2026-11-07) ---
+
+def _schritte(client, je_tag: int, tage: int = 20):
+    from datetime import date
+    heute = date.today()
+    r = client.put("/api/schritte", json=[
+        {"datum": (heute - timedelta(days=i)).isoformat(), "schritte": je_tag} for i in range(tage)
+    ])
+    assert r.status_code == 200, r.text
+
+
+def test_viele_schritte_heben_wenig_training_an(client, db_session):
+    """Owner 2026-11-06: Schritte fliessen in die Energiebilanz. Es gilt die hoehere Stufe."""
+    eid = _uebung(client)
+    for i in range(4):  # 1 pro Woche: light
+        _training(client, db_session, eid, tage_her=i * 7)
+    _schritte(client, 11000)
+    n = aktivitaet.ableiten(db_session)
+    assert n.stufe == "active" and n.faktor == 1.725
+    assert n.durch_schritte is True and n.schritte_schnitt == 11000
+    assert "die Schritte heben das an" in n.begruendung
+
+
+def test_wenige_schritte_senken_nichts(client, db_session):
+    eid = _uebung(client)
+    for i in range(16):
+        _training(client, db_session, eid, tage_her=i * 1.7)
+    _schritte(client, 3000)
+    n = aktivitaet.ableiten(db_session)
+    assert n.stufe == "moderate" and n.durch_schritte is False
+    assert "ändern nichts" in n.begruendung
+
+
+def test_schritte_allein_sind_belastbar_ab_zwei_wochen(client, db_session):
+    _schritte(client, 8000, tage=13)
+    assert aktivitaet.ableiten(db_session).belastbar is False
+    _schritte(client, 8000, tage=14)
+    n = aktivitaet.ableiten(db_session)
+    assert n.belastbar is True and n.stufe == "moderate"
+
+
+def test_wenige_schritte_ohne_training_senken_den_bedarf_nicht(client, db_session):
+    """Gemessen beim Ausrollen: 5760 Schritte ohne erfasstes Training hiessen
+    „light" und haetten MealPrep von moderate auf 1,375 gesenkt."""
+    _schritte(client, 5760)
+    n = aktivitaet.ableiten(db_session)
+    assert n.belastbar is False
+    assert aktivitaet.uebertragen_faellig(db_session, n) is False
+    assert "senken sie den Bedarf nicht" in n.begruendung
+

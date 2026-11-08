@@ -43,6 +43,7 @@ PLAN = mechanik.Plan(
         mechanik.eigene("exercise_selection", warum="Uebungsauswahl des Mandanten"),
         mechanik.eigene("body_metric", warum="Koerperwerte"),
         mechanik.eigene("tagesschritte", warum="Schrittzaehlung"),
+        mechanik.eigene("koerpermass", warum="Koerpermasse (Umfaenge)"),
         mechanik.eigene("anstoss_merker", warum="Merker fuer Anstoesse"),
         mechanik.eigene("nutzerprofil", warum="Profil"),
         # Zuletzt, siehe Modulkopf: anderer Spaltenname, und vieles zeigt darauf.

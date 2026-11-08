@@ -8,26 +8,30 @@ interface Props {
   data: any[];
   lines: Array<{ key: string; color: string; name: string }>;
   xKey?: string;
+  hoehe?: number;
 }
 
-export default function ProgressChart({ data, lines, xKey = 'date' }: Props) {
+export default function ProgressChart({ data, lines, xKey = 'date', hoehe = 250 }: Props) {
   if (data.length === 0) {
     return <div className="empty">Keine Daten vorhanden</div>;
   }
 
   return (
-    <ResponsiveContainer width="100%" height={250}>
+    <ResponsiveContainer width="100%" height={hoehe}>
       <LineChart data={data} margin={{ top: 5, right: 5, bottom: 5, left: -10 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
         <XAxis
           dataKey={xKey}
-          tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+          tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
           tickFormatter={v => {
             const d = new Date(v);
             return `${d.getDate()}.${d.getMonth() + 1}`;
           }}
         />
-        <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+        {/* Achse um die Werte statt ab null: ein Gewicht zwischen 78 und
+            80 kg war sonst ein flacher Strich am oberen Rand. */}
+        <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 12 }} domain={['auto', 'auto']}
+               tickFormatter={(v: number) => v.toLocaleString('de-DE')} />
         <Tooltip
           contentStyle={{
             background: 'var(--bg-card)',

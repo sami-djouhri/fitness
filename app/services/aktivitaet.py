@@ -58,6 +58,35 @@ STUFEN = [
 ]
 
 
+# Schritte zaehlen mit (Entscheid 2026-11-06: „Schritte fliessen in
+# Energiebilanz und MealPrep"). Stufen nach Tudor-Locke (Schritte je Tag),
+# Obergrenze exklusiv, dieselben Stufennamen wie oben. Es gilt die HOEHERE
+# Stufe aus Training und Schritten: wer viel laeuft und wenig trainiert, ist
+# trotzdem aktiv, und zusammenzaehlen wuerde dieselbe Bewegung doppelt werten.
+SCHRITT_STUFEN = [
+    ("sedentary", 5000),
+    ("light", 7500),
+    ("moderate", 10000),
+    ("active", 12500),
+    ("very_active", float("inf")),
+]
+# Was MealPrep ohne Messung annimmt; darunter senken Schritte allein nichts.
+VORGABE_OHNE_MESSUNG = "moderate"
+# Ab so vielen erfassten Tagen im Fenster ist der Schritt-Schnitt belastbar.
+MINDEST_SCHRITT_TAGE = 14
+
+
+def _schritt_stufe(schnitt: float) -> str:
+    for stufe, obergrenze in SCHRITT_STUFEN:
+        if schnitt < obergrenze:
+            return stufe
+    return SCHRITT_STUFEN[-1][0]
+
+
+def _rang(stufe: str) -> int:
+    return [s[0] for s in STUFEN].index(stufe)
+
+
 @dataclass
 class Niveau:
     stufe: str
@@ -68,6 +97,10 @@ class Niveau:
     fenster_tage: int = FENSTER_TAGE
     # Genug erfasst, um daraus einen Kalorienbedarf abzuleiten?
     belastbar: bool = False
+    #: Schnitt der Schritte je Tag im Fenster, None ohne genug erfasste Tage.
+    schritte_schnitt: int | None = None
+    #: Ob die Schritte die Stufe angehoben haben.
+    durch_schritte: bool = False
 
 
 def _stufe_fuer(pro_woche: float) -> tuple[str, float, str]:
@@ -107,6 +140,35 @@ def ableiten(db: Session) -> Niveau:
             "Solange wird der Kalorienbedarf nicht aus dem Training abgeleitet."
         )
 
+    # Schritte aus Health Connect (Tabelle tagesschritte), gleiches Fenster.
+    from app.models import Tagesschritte
+    ab = (datetime.now(timezone.utc) - timedelta(days=FENSTER_TAGE)).date()
+    werte = [s for (s,) in db.query(Tagesschritte.schritte).filter(Tagesschritte.datum >= ab).all()]
+    schnitt = round(sum(werte) / len(werte)) if len(werte) >= MINDEST_SCHRITT_TAGE else None
+    durch_schritte = False
+    # Schritte heben nur an, sie senken nie. Ohne belastbares Training
+    # zaehlen sie allein erst ab der MealPrep-Vorgabe (moderate): 5800 Schritte
+    # ohne erfasstes Training hiessen sonst „light" und senkten den Bedarf um
+    # rund 11 %, bei jemandem, der vielleicht trainiert, es aber nicht eintraegt
+    # (gemessen beim Ausrollen am 2026-11-07, vor der Uebertragung abgefangen).
+    if schnitt is not None and not belastbar and _rang(_schritt_stufe(schnitt)) < _rang(VORGABE_OHNE_MESSUNG):
+        begruendung += (f" Schritte {schnitt} am Tag im Schnitt; allein senken sie den Bedarf nicht, "
+                        "erst ab 7500 am Tag zählen sie ohne Training.")
+        schnitt_wirkt = False
+    else:
+        schnitt_wirkt = schnitt is not None
+    if schnitt_wirkt:
+        aus_schritten = _schritt_stufe(schnitt)
+        if not belastbar or _rang(aus_schritten) > _rang(stufe):
+            durch_schritte = True
+            stufe = aus_schritten
+            faktor = next(f for s, f, _o, _t in STUFEN if s == stufe)
+            teil = f"{schnitt} Schritte am Tag im Schnitt"
+            begruendung = (teil if not belastbar else f"{begruendung}; die Schritte heben das an ({teil})")
+        else:
+            begruendung += f"; Schritte {schnitt} am Tag im Schnitt (ändern nichts)"
+        belastbar = True
+
     return Niveau(
         stufe=stufe,
         faktor=faktor,
@@ -114,6 +176,8 @@ def ableiten(db: Session) -> Niveau:
         trainings_pro_woche=pro_woche,
         trainings_im_fenster=anzahl,
         belastbar=belastbar,
+        schritte_schnitt=schnitt,
+        durch_schritte=durch_schritte,
     )
 
 

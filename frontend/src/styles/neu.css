@@ -78,9 +78,9 @@
   display: inline-block;
   padding: 2px 8px;
   border-radius: 999px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: #0b1220;
+  color: var(--auf-primary);
 }
 
 .etikett.gruen { background: var(--success); }
@@ -97,7 +97,7 @@
 }
 
 .segment.breit { display: flex; width: 100%; margin-bottom: 14px; }
-.segment.klein button { font-size: 0.74rem; padding: 4px 10px; }
+.segment.klein button { font-size: 0.75rem; padding: 4px 10px; }
 
 .segment button {
   background: transparent;
@@ -122,7 +122,7 @@
 /* ------------------------------------------------------------------ */
 
 .koerpermodell {
-  background: radial-gradient(ellipse at 50% 35%, #1b2637 0%, var(--bg) 78%);
+  background: radial-gradient(ellipse at 50% 35%, #2a2318 0%, var(--bg) 78%);
   border: 1px solid var(--border);
   border-radius: 14px;
   overflow: hidden;
@@ -142,7 +142,7 @@
   justify-content: space-between;
   gap: 8px;
   padding: 6px 10px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   border-top: 1px solid var(--border);
   flex-wrap: wrap;
@@ -152,7 +152,7 @@
   background: var(--bg-input);
   color: var(--text);
   padding: 4px 10px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   border-radius: 999px;
 }
 
@@ -180,7 +180,7 @@
   justify-content: center;
   flex-wrap: wrap;
   margin-bottom: 14px;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
@@ -350,7 +350,7 @@
 }
 
 .korridor-text {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   margin-top: 5px;
 }
@@ -382,7 +382,7 @@
 }
 
 .kennzahl-text {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   margin-top: 3px;
   line-height: 1.25;
@@ -480,7 +480,7 @@
   background: var(--bg-input);
   border-radius: 6px;
   padding: 5px 9px;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
@@ -560,7 +560,7 @@
 /* Sagt, was der Haken bringt. Eine Liste mit dreißig Kästchen ohne
    sichtbare Wirkung füllt niemand aus. */
 .geraet-gewinn {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   color: var(--primary);
   font-weight: 600;
   white-space: nowrap;
@@ -620,25 +620,52 @@
   z-index: 100;
   display: flex;
   justify-content: space-around;
-  background: rgba(26, 29, 34, 0.94);
-  backdrop-filter: blur(10px);
+  background: rgba(31, 27, 21, 0.92);
+  backdrop-filter: blur(12px);
   border-top: 1px solid var(--border);
-  padding: 5px 0 max(5px, env(safe-area-inset-bottom));
+  padding: 4px 4px env(safe-area-inset-bottom);
 }
 
+/* Vorher 0,62rem (knapp 10 px) und 4x8 px Innenabstand: lesbar nur mit
+   Brille, und das Tippziel war kleiner als ein Daumen. Jetzt wie die
+   NavigationBar der APK: 56 px hoch, Beschriftung 12 px, aktiver Punkt
+   mit Messing-Pille hinter dem Symbol. */
 .unterleiste-punkt {
+  flex: 1;
+  max-width: 120px;
+  min-height: 56px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 4px 8px;
-  font-size: 0.62rem;
+  justify-content: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
   color: var(--text-muted);
   text-decoration: none;
-  border-radius: 9px;
 }
 
-.unterleiste-punkt.aktiv { color: var(--primary); }
+.unterleiste-punkt svg {
+  width: 44px;
+  height: 26px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  box-sizing: border-box;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.unterleiste-punkt.aktiv { color: var(--text); font-weight: 600; }
+.unterleiste-punkt.aktiv svg { background: var(--primary-soft); color: var(--primary); }
+
+/* ------------------------------------------------------------------ */
+/*  Saganta-Kopf                                                       */
+/* ------------------------------------------------------------------ */
+
+/* Saganta-Kopf: Element und Aussehen kommen aus `saganta-kopf.js` (erzeugt von
+   saganta/scripts/kopf-erzeugen.py, nie von Hand aendern). Hier steht nur,
+   wo es sitzt. Bis 2026-11-02 stand an dieser Stelle ein eigener Nachbau der
+   TopBar, je Dienst einer, und keiner hatte den App-Wechsler. */
+saganta-kopf { position: fixed; top: 0; left: 0; right: 0; z-index: 150; }
 
 /* ------------------------------------------------------------------ */
 /*  Heute                                                              */
@@ -654,7 +681,7 @@
 }
 
 .heute-oberzeile {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
@@ -694,7 +721,7 @@
   line-height: 1.45;
 }
 
-.dauerwahl { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+.dauerwahl { display: flex; gap: 6px; margin: 10px 0; flex-wrap: wrap; }
 
 .dauerwahl button {
   background: var(--bg-input);
@@ -780,7 +807,139 @@
   color: var(--text-muted);
   border-radius: 6px;
   padding: 3px 8px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .wochentagwahl button.aktiv { background: var(--primary); color: var(--auf-primary); }
+
+/* ------------------------------------------------------------------ */
+/*  Handy und Zugänglichkeit (2026-11-08)                              */
+/* ------------------------------------------------------------------ */
+
+/* Fokus sichtbar in der Hausfarbe, nur bei Tastatur, nicht beim Tippen. */
+:focus-visible {
+  outline: 2px solid var(--saganta-focus);
+  outline-offset: 2px;
+}
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline-offset: 0; }
+
+/* Haken und Auswahlpunkte in Messing statt im Systemblau. */
+input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
+
+/* Kein Doppeltipp-Zoom auf Bedienelementen: das Zoomen per zwei Fingern
+   bleibt erlaubt (Lesbarkeit), nur die 300-ms-Verzögerung entfällt. */
+a, button, input, select, label { touch-action: manipulation; }
+
+/* Abstand vor jedem Abschnittstitel, der nicht ganz oben steht. Ohne ihn
+   klebte z. B. „Ziel“ auf der Profilseite am Hinweis darüber. */
+.page > h2:not(:first-child) { margin-top: 22px; }
+
+/* Leises Etikett (z. B. „ergänzt“): ohne Grundfarbe stand dunkle Schrift
+   auf dunkler Karte (1,2:1). */
+.etikett.leise { background: var(--bg-input); color: var(--text-muted); }
+
+/* Löschen als leiser Knopf: Kreuz in gedämpfter Farbe, rot erst beim
+   Darüberfahren. Ersetzt das rot gefüllte `btn-danger btn-sm` in Listen. */
+.knopf-loeschen {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 8px;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.knopf-loeschen:hover { color: var(--danger); border-color: var(--danger); }
+.knopf-loeschen.klein { font-size: 0.85rem; }
+
+/* Eine ganze Karte als Knopf (Planliste): sieht aus wie die Karte. */
+.zeilenknopf { width: 100%; text-align: left; color: var(--text); }
+.zeilenknopf:hover { border-color: var(--border-stark); }
+
+/* „Satz gelöscht · Rückgängig“: über der unteren Leiste, 5 s lang. */
+.rueckgaengig-leiste {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--leiste-hoehe) + env(safe-area-inset-bottom) + 12px);
+  transform: translateX(-50%);
+  z-index: 160;
+  width: min(560px, calc(100% - 24px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 4px 4px 16px;
+  background: var(--saganta-surface-hover);
+  border: 1px solid var(--border-stark);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  font-size: 0.9rem;
+}
+.rueckgaengig-leiste button {
+  min-height: 44px;
+  padding: 0 14px;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* Diagramm-Legende in gedämpfter Textfarbe; die Farbe trägt das Symbol.
+   recharts schreibt die Linienfarbe als Inline-Stil auf den Text, bei der
+   halbtransparenten Säule ergab das 2,5:1. */
+.recharts-legend-item-text { color: var(--text-muted) !important; }
+
+/* Die Reiterleiste der Zahlen-Seite passt am Handy nicht mit vollem
+   Innenabstand in 390 px und schob die Seite um 20 px seitlich. */
+@media (max-width: 480px) {
+  .segment.breit button { padding: 6px 8px; }
+}
+
+/* Tippflächen am Handy: mindestens 44 px. Wo die Fläche sichtbar wachsen
+   darf, wächst sie; wo die Dichte zählt (Chips, Dauerwahl), wächst nur die
+   unsichtbare Trefferfläche. Am Schreibtisch bleibt alles wie es war. */
+@media (pointer: coarse) {
+  .btn-sm, .knopf-loeschen { min-height: 44px; min-width: 44px; }
+  .verweis { display: inline-flex; align-items: center; min-height: 44px; }
+  .geraet { min-height: 44px; }
+  .zeilenknopf { min-height: 48px; }
+  .schalter { min-height: 44px; }
+  .karte.flach > a { min-height: 44px; display: flex; flex-direction: column; justify-content: center; }
+
+  /* Übungsliste unter dem Körpermodell: Haken, Titel und Pfeil füllen die
+     Zeile, die Zeile ist 44 px hoch. */
+  .uebungszeile { min-height: 44px; padding: 0; align-items: stretch; grid-template-columns: 44px 1fr 40px 44px; }
+  .uebungszeile > .zeilen-haken,
+  .uebungszeile > .zeilen-titel,
+  .uebungszeile > .zeilen-pfeil { min-height: 44px; display: flex; align-items: center; justify-content: center; }
+  .uebungszeile > .zeilen-titel { justify-content: center; align-items: flex-start; }
+  .uebungszeile > .anteil-balken { align-self: center; }
+  .geraet input[type="checkbox"] { width: 18px; height: 18px; }
+  .unterleiste-punkt { min-height: 56px; }
+
+  /* Der Übungsname in der Heute-Liste führt zur Übung: ganze Zeilenhöhe. */
+  .heute-uebung { align-items: center; }
+  .heute-uebung a { display: inline-flex; align-items: center; min-height: 44px; margin: -5px 0; }
+
+  .dauerwahl button,
+  .segment button,
+  .modell-knopf,
+  .gruppen-chip,
+  .wochentagwahl button,
+  .knopf-flach {
+    position: relative;
+  }
+  .dauerwahl button::after,
+  .segment button::after,
+  .modell-knopf::after,
+  .gruppen-chip::after,
+  .wochentagwahl button::after,
+  .knopf-flach::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}

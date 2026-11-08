@@ -1,37 +1,52 @@
-/* fitness: der Kraftraum.
+/* fitness: die Nachtstudie, wie der Rest von Saganta.
  *
- * Vorher stand hier die Tailwind-Grundpalette in Reinform (slate-900 als
- * Grund, blue-600 als Akzent) und darueber ein `theme.css`, das die
- * App gar nicht benutzte: die Farben wurden zwei Zeilen spaeter
- * ueberschrieben. Geblieben war nur sein Nebeneffekt, ein Abruf von
- * fonts.googleapis.com bei jedem Aufruf. Beides ist weg.
+ * Bis 2026-11-01 trug diese Oberflaeche eine eigene Signatur ("Gusseisen und
+ * Kreide": blaugraues Eisen, Anybody fuer Zahlen, Hanken Grotesk im Text).
+ * Fuer sich genommen war sie stimmig. Neben der Fitness-APK sah sie aber wie
+ * ein anderes Produkt aus, denn die APK traegt seit 2026-09-28 das
+ * Saganta-Bild aus `saganta-apps/core`. Entscheid 2026-11-01: eine
+ * Familie, die Nachtstudie, auf Web und Telefon gleich.
  *
- * Was statt dessen gilt:
+ * Was gilt:
  *
- * 1. GUSSEISEN UND KREIDE. Der Grund ist nicht mehr das blaustichige Slate,
- *    sondern ein warmes Dunkelgrau, wie Hantelscheiben im Kellerlicht. Der
- *    Text ist Kreide.
+ * 1. FARBEN aus `nachtstudie.css`, seit 2026-11-02 ERZEUGT aus
+ *    `saganta/packages/design-tokens/src/theme.css` per
+ *    `saganta/scripts/nachtstudie-erzeugen.py`. Vorher standen sie hier Wert
+ *    fuer Wert abgeschrieben. Einen Ton aendert man in der Quelle, nie hier.
+ *    Messing ist die Bedienfarbe (Knopf, aktiver Punkt), nicht Zierde.
  *
- * 2. DIE EINZIGE BUNTFARBE IST DAS GEWICHT. Es gibt keinen blauen Knopf
- *    mehr. Bedienung steht in Kreide auf Eisen. Farbig sind nur zwei Dinge,
- *    und beide bedeuten etwas: die genormten Scheibenfarben am Gewicht
- *    (25 rot, 20 blau, 15 gelb, 10 gruen, 5 weiss, 2,5 schwarz, wie im
- *    Wettkampf) und die Frische-Skala der Muskelgruppen, die es schon gab.
+ * 2. BEDEUTUNGSFARBEN bleiben: die genormten Scheibenfarben am Gewicht und
+ *    die Frische-Skala der Muskelgruppen. Sie sagen etwas, die Hausfarbe
+ *    sagt nur "hier kann man tippen".
  *
- * 3. SCHRIFT AUS DER SACHE. Anybody ist nach Trikotnummern gezeichnet und
- *    hat eine Breitenachse von 50 bis 150. Sie traegt hier die Zahlen, also
- *    Gewichte und Wiederholungen, breit und schwer. Der Fliesstext laeuft in
- *    Hanken Grotesk, ruhig, damit die Zahlen die Lauten bleiben.
- *
- * Beide Schriften liegen als npm-Abhaengigkeit im Haus und werden in den
- * Build gebuendelt. Kein Fremdabruf zur Laufzeit.
+ * 3. EINE SCHRIFT. Inter fuer Text, Titel und Zahlen, Titel halbfett und
+ *    enger gesetzt, Zahlen mit Tabellenziffern, damit Spalten bei jeder
+ *    Aktualisierung stehen bleiben. Gleiche Wahl wie in der APK. Die Datei
+ *    liegt unter `src/fonts/` (OFL), kein Fremdabruf zur Laufzeit.
  */
 
-@import '@fontsource-variable/anybody/wdth.css';
-@import '@fontsource-variable/hanken-grotesk/index.css';
+@import './nachtstudie.css';
 @import './neu.css';
 @tailwind components;
 @tailwind utilities;
+
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(../fonts/inter-latin-ext-wght-normal.woff2) format('woff2-variations');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(../fonts/inter-latin-wght-normal.woff2) format('woff2-variations');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -40,41 +55,45 @@
 }
 
 :root {
-  /* Gusseisen. Warmes Dunkelgrau statt blaustichigem Slate. */
-  --bg: #15171b;
-  --bg-surface: #1a1d22;
-  --bg-card: #1f232a;
-  --bg-elevated: #272c34;
-  --bg-input: #2b3039;
-  --border: #363c47;
-  --text: #ecedf0;
-  --text-muted: #9ba2ad;
+  color-scheme: dark;
 
-  /* Die Bedienung traegt keine eigene Farbe: Kreide auf Eisen.
-     `--primary` bleibt als Name bestehen, weil beide CSS-Dateien und ein
-     Dutzend Komponenten darauf zeigen. Sein Wert ist jetzt die Kreide. */
-  --primary: #ecedf0;
-  --primary-dark: #ffffff;
-  --primary-soft: rgba(236, 237, 240, 0.10);
-  /* Was auf einer Kreideflaeche steht. Frueher war das `white` auf Blau. */
-  --auf-primary: #15171b;
+  /* Nachtstudie: die Werte kommen aus `nachtstudie.css` (erzeugt aus
+     saganta/packages/design-tokens/src/theme.css, bewacht per Pruefsumme).
+     Hier stehen nur noch die Namen, die fitness seit jeher benutzt. */
+  --bg: var(--saganta-surface);
+  --bg-surface: #1a1712;    /* zwischen Grund und Karte, fuer Leerflaechen */
+  --bg-card: var(--saganta-surface-2);
+  --bg-elevated: var(--saganta-surface-hover);
+  --bg-input: var(--saganta-surface-sunken);
+  --border: var(--saganta-border);        /* Trennstrich */
+  /* Feldrahmen brauchen 3:1 (WCAG 1.4.11), der Trennstrich hat 1,2:1. */
+  --border-stark: var(--saganta-border-stark);
+  --text: var(--saganta-text);
+  --text-muted: var(--saganta-muted);
+  --text-dim: var(--saganta-text-dim);
 
-  --success: #4d9a63;
-  --warning: #c08b2e;
-  --danger: #c2483c;
-  --radius: 8px;
+  /* Bedienung in Messing. `--primary` bleibt als Name, weil beide CSS-Dateien
+     und ein Dutzend Komponenten darauf zeigen. */
+  --primary: var(--saganta-akzent);
+  --primary-dark: var(--saganta-akzent-stark);
+  --primary-soft: rgb(var(--saganta-akzent-rgb) / 0.12);
+  --auf-primary: var(--saganta-auf-messing);
 
-  /* Frische der Muskelgruppen. Bleibt eine Skala, nur entsaettigt, damit
-     sie neben dem ruhigeren Grund nicht schreit. */
+  --success: var(--saganta-erfolg);
+  --warning: var(--saganta-warnung);
+  --danger: var(--saganta-fehler);
+  --radius: 10px;
+
+  /* Frische der Muskelgruppen. Eine Skala mit Bedeutung, bleibt. */
   --muscle-fresh: #4d9a63;
   --muscle-optimal: #6cae76;
   --muscle-due: #c9a03a;
   --muscle-overdue: #c2762f;
   --muscle-neglected: #c2483c;
 
-  --success-soft: rgba(77, 154, 99, 0.14);
-  --warning-soft: rgba(192, 139, 46, 0.14);
-  --danger-soft: rgba(194, 72, 60, 0.14);
+  --success-soft: rgb(var(--saganta-erfolg-rgb) / 0.12);
+  --warning-soft: rgb(var(--saganta-warnung-rgb) / 0.12);
+  --danger-soft: rgb(var(--saganta-fehler-rgb) / 0.12);
 
   /* Wettkampf-Scheibenfarben. Das Farbvokabular des Kraftraums. */
   --scheibe-25: #c2483c;
@@ -84,52 +103,57 @@
   --scheibe-5: #d8dade;
   --scheibe-2: #767d8a;
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
 
   --transition-fast: 0.12s ease;
   --transition-normal: 0.2s ease;
 
-  --schrift: 'Hanken Grotesk Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --schrift-zahl: 'Anybody Variable', 'Hanken Grotesk Variable', system-ui, sans-serif;
+  --schrift: var(--saganta-schrift);
+  --schrift-zahl: var(--schrift);
+
+  /* Hoehen von Kopf und Leiste, damit der Inhalt nie darunter verschwindet. */
+  --kopf-hoehe: 58px;
+  --leiste-hoehe: 64px;
 }
 
 html, body {
   font-family: var(--schrift);
+  font-feature-settings: 'cv11', 'ss01';
   background: var(--bg);
   color: var(--text);
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Zahlen sind in dieser App der Inhalt, nicht die Beschriftung: Gewicht,
-   Wiederholungen, Saetze. Sie laufen deshalb in Anybody, breit gestellt,
-   und fluchten untereinander. */
+/* Zahlen sind in dieser App der Inhalt: Gewicht, Wiederholungen, Saetze.
+   Tabellenziffern, damit sie untereinander fluchten. */
 .zahl,
 .stat-value,
 .kennzahl-wert,
 .gewicht,
 .stat-card .value {
   font-family: var(--schrift-zahl);
-  font-variation-settings: 'wdth' 118, 'wght' 650;
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -.01em;
+  letter-spacing: -.015em;
 }
 
-/* Ueberschriften laufen ebenfalls in Anybody, aber schmaler und leichter
-   als die Zahlen: sie sollen den Raum gliedern, nicht mit den Gewichten um
-   Aufmerksamkeit streiten. */
+/* Titel: dieselbe Inter, halbfett und enger. So in der APK
+   (`sagantaTypographie`), damit beide gleich klingen. */
 h1, h2, h3, .seiten-kopf h1, .seiten-kopf h2 {
-  font-family: var(--schrift-zahl);
-  font-variation-settings: 'wdth' 96, 'wght' 620;
-  letter-spacing: -.012em;
+  font-family: var(--schrift);
+  font-weight: 620;
+  letter-spacing: -.022em;
+  line-height: 1.2;
 }
 
 #root {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  padding-bottom: 64px;
+  padding-top: var(--kopf-hoehe);
+  padding-bottom: calc(var(--leiste-hoehe) + env(safe-area-inset-bottom));
 }
 
 /* Links tragen jetzt dieselbe Farbe wie der Text, weil es keine Akzentfarbe
@@ -164,6 +188,10 @@ button {
   cursor: pointer;
   border: none;
   font: inherit;
+  /* Ohne eigene Klasse sonst hellgrau aus dem Browser, mit gedämpfter
+     Schrift darauf (gemessen 1,9:1 am Löschen-Knopf der Einheiten). */
+  background: transparent;
+  color: inherit;
   border-radius: var(--radius);
   padding: 8px 16px;
   transition: background 0.15s;
@@ -177,14 +205,21 @@ button {
 .btn-primary:hover { background: var(--primary-dark); }
 
 .btn-secondary {
-  background: var(--bg-input);
+  background: var(--bg-elevated);
   color: var(--text);
+  border: 1px solid var(--border);
 }
 .btn-secondary:hover { background: var(--border); }
 
+/* Tippziel 44 px, wie in der Saganta-Kopfzeile und der APK. */
+.btn-primary,
+.btn-secondary,
+.btn-danger { min-height: 44px; }
+
 .btn-danger {
   background: var(--danger);
-  color: white;
+  color: var(--auf-primary);
+  font-weight: 600;
 }
 
 .btn-sm { padding: 4px 10px; font-size: 0.85rem; }
@@ -193,11 +228,18 @@ input, select, textarea {
   font: inherit;
   background: var(--bg-input);
   color: var(--text);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-stark);
   border-radius: var(--radius);
-  padding: 8px 12px;
+  padding: 10px 12px;
+  min-height: 44px;
   width: 100%;
 }
+
+/* Die 44 px oben gelten fuer Textfelder, nicht fuer Haken und Regler:
+   die tragen ihr Tippziel ueber das umgebende Label. */
+input[type="checkbox"],
+input[type="radio"] { min-height: 0; width: auto; }
+input[type="range"] { min-height: 0; }
 
 input:focus, select:focus, textarea:focus {
   outline: 2px solid var(--primary);
@@ -409,7 +451,7 @@ input:focus, select:focus, textarea:focus {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
@@ -570,7 +612,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .compact-stat .label {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
@@ -685,10 +727,12 @@ input:focus, select:focus, textarea:focus {
 .star-rating-btn {
   background: none;
   border: none;
-  padding: 4px;
+  padding: 10px;
   font-size: 1.5rem;
   cursor: pointer;
-  color: var(--border);
+  /* Leere Sterne in --text-dim: in --border (1,3:1) sah man nicht, dass
+     dort fünf Knöpfe stehen. */
+  color: var(--text-dim);
   transition: color var(--transition-fast), transform var(--transition-fast);
   line-height: 1;
 }
@@ -759,7 +803,7 @@ input:focus, select:focus, textarea:focus {
 /* ------------------------------------------------------------------ */
 
 .muscle-map-body svg polygon[data-selected="true"] {
-  filter: drop-shadow(0 0 4px rgba(96, 165, 250, 0.5));
+  filter: drop-shadow(0 0 4px rgba(221, 156, 63, 0.55));
 }
 
 /* ------------------------------------------------------------------ */
@@ -832,7 +876,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .scheiben-text {
-  font-size: .68rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   margin-left: 4px;
   white-space: nowrap;

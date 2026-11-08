@@ -83,7 +83,10 @@ class PlanService:
             raise DomainError("Trainingstag nicht gefunden", {"day_id": day_id})
         if data.name is not None:
             day.name = data.name
-        if data.day_of_week is not None:
+        # Ausdruecklich null heisst „rotierend“ (Knopf im Web und in der App).
+        # Bis 2026-11-08 stand hier `is not None`: der Knopf lief ins Leere,
+        # ein einmal gesetzter Wochentag liess sich nie mehr loesen.
+        if "day_of_week" in data.model_fields_set:
             day.day_of_week = data.day_of_week
         if data.sort_order is not None:
             day.sort_order = data.sort_order

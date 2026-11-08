@@ -129,7 +129,7 @@ export default function SetRow({ set, onUpdate, onDelete, onToggleCompleted, zie
           style={{
             position: 'absolute', right: 0, top: 0, bottom: 0,
             width: 80, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'var(--danger)', color: '#fff', fontWeight: 700, fontSize: '0.8rem',
+            background: 'var(--danger)', color: 'var(--auf-primary)', fontWeight: 700, fontSize: '0.8rem',
             cursor: 'pointer',
           }}
           onClick={() => { onDelete(); setSwipeX(0); }}
@@ -161,7 +161,7 @@ export default function SetRow({ set, onUpdate, onDelete, onToggleCompleted, zie
           onClick={!readonly ? () => setEditing(true) : undefined}
         >
           <span className="gewicht">
-            {set.weight_kg != null ? `${set.weight_kg} kg` : '\u2014'}
+            {set.weight_kg != null ? `${set.weight_kg.toLocaleString('de-DE')} kg` : '\u2014'}
           </span>
           {/* Was das an der Stange bedeutet. Siehe Scheiben.tsx. */}
           <Scheiben kg={set.weight_kg} knapp />
@@ -182,7 +182,10 @@ export default function SetRow({ set, onUpdate, onDelete, onToggleCompleted, zie
             {/* Kein Stift mehr: die Werte selbst sind die Trefferflaeche zum
                 Bearbeiten. Das Loeschen bleibt als Knopf erreichbar, der
                 Wisch-Weg daneben gibt es nur auf Geraeten mit Touch. */}
-            <button className="btn-danger btn-sm" onClick={onDelete} aria-label="Satz löschen">&times;</button>
+            {/* Leise statt rot: der Knopf steht direkt neben dem Haken, dem
+                meistgedrückten Knopf im Gym. Rot gefüllt zog er das Auge
+                und den Daumen dorthin, wo ein Fehltipp einen Satz löscht. */}
+            <button className="knopf-loeschen" onClick={onDelete} aria-label="Satz löschen">&times;</button>
             {onToggleCompleted && (
               // 44 Pixel: die Flaeche, die sich mit nassen Fingern noch treffen
               // laesst. Das ist der Knopf, der im Gym am oeftesten gedrueckt wird.
@@ -193,9 +196,9 @@ export default function SetRow({ set, onUpdate, onDelete, onToggleCompleted, zie
                 style={{
                   width: 44, height: 44, minWidth: 44,
                   borderRadius: 10,
-                  border: `2px solid ${set.is_completed ? 'var(--success)' : 'var(--border)'}`,
+                  border: `2px solid ${set.is_completed ? 'var(--success)' : 'var(--border-stark)'}`,
                   background: set.is_completed ? 'var(--success)' : 'transparent',
-                  color: set.is_completed ? '#fff' : 'var(--border)',
+                  color: set.is_completed ? 'var(--auf-primary)' : 'var(--text-dim)',
                   fontSize: '1.25rem', fontWeight: 700, lineHeight: 1,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: 'pointer',

@@ -10,6 +10,7 @@ import type {
   Progressionsvorschlag,
 } from '../types';
 import ProgressChart from '../components/ProgressChart';
+import { dez, zahl } from '../zahlformat';
 
 /** Wie auf der Körperseite nachgeladen: three.js gehört nicht ins Hauptbündel. */
 const Koerpermodell = lazy(() => import('../components/Koerpermodell'));
@@ -216,7 +217,7 @@ export default function ExerciseDetailPage() {
           <div className="overload-reason">{suggestion.begruendung}</div>
           {suggestion.letztes_gewicht_kg != null && (
             <div className="overload-last">
-              Zuletzt: {suggestion.letztes_gewicht_kg} kg x {suggestion.letzte_wdh}
+              Zuletzt: {suggestion.letztes_gewicht_kg != null ? zahl(suggestion.letztes_gewicht_kg) : '–'} kg x {suggestion.letzte_wdh}
             </div>
           )}
           {suggestion.aufwaermsaetze.length > 0 && (
@@ -242,7 +243,7 @@ export default function ExerciseDetailPage() {
                 <div>
                   <strong>Kraftlevel</strong>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    1RM: {strengthLevel.current_1rm ? strengthLevel.current_1rm.toFixed(1) : '–'} kg
+                    1RM: {strengthLevel.current_1rm ? dez(strengthLevel.current_1rm) : '–'} kg
                   </div>
                 </div>
                 <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--primary)' }}>
@@ -267,7 +268,7 @@ export default function ExerciseDetailPage() {
                         color: levelName === strengthLevel.level ? 'var(--primary)' : 'var(--text-muted)',
                         fontWeight: levelName === strengthLevel.level ? 700 : 400,
                       }}>
-                        {levelName} ({threshold.toFixed(1)})
+                        {levelName} ({dez(threshold)})
                       </span>
                     ))}
                 </div>
@@ -289,7 +290,7 @@ export default function ExerciseDetailPage() {
                       </span>
                     </div>
                     <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--success)' }}>
-                      {pr.value.toFixed(1)}{pr.pr_type === 'max_reps' ? '' : ' kg'}
+                      {pr.pr_type === 'max_reps' ? zahl(pr.value) : `${dez(pr.value)} kg`}
                     </div>
                   </div>
                 ))}
@@ -302,13 +303,18 @@ export default function ExerciseDetailPage() {
       {/* 4. 1RM Progression Chart */}
       {progress.length > 0 && (
         <div className="mb-16">
+          {/* Zwei Diagramme mit je eigener Achse: auf einer gemeinsamen lag das
+              1RM (um 80 kg) neben dem Volumen (um 2000 kg) als flacher Strich. */}
           <h2>1RM Entwicklung</h2>
           <ProgressChart
             data={progress}
-            lines={[
-              { key: 'estimated_1rm', color: 'var(--success)', name: 'Geschätztes 1RM (kg)' },
-              { key: 'total_volume', color: 'var(--primary)', name: 'Volumen (kg)' },
-            ]}
+            lines={[{ key: 'estimated_1rm', color: 'var(--success)', name: 'Geschätztes 1RM (kg)' }]}
+          />
+          <h2 className="mt-16">Volumen je Einheit</h2>
+          <ProgressChart
+            data={progress}
+            hoehe={180}
+            lines={[{ key: 'total_volume', color: 'var(--primary)', name: 'Volumen (kg)' }]}
           />
         </div>
       )}
@@ -333,7 +339,7 @@ export default function ExerciseDetailPage() {
                     {session.sets.length > 0 ? (
                       session.sets.map((set, idx) => (
                         <div key={idx}>
-                          Satz {set.set_number}: {set.weight_kg ? `${set.weight_kg} kg` : '–'}{' '}
+                          Satz {set.set_number}: {set.weight_kg ? `${zahl(set.weight_kg)} kg` : '–'}{' '}
                           {set.reps ? `× ${set.reps}` : ''}
                         </div>
                       ))

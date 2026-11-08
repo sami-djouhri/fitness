@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import BottomNav from './components/BottomNav';
-import { beobachten, nachtragenStarten } from './warteschlange';
+import { abgelehnt, abgelehntLeeren, beobachten, nachtragenStarten } from './warteschlange';
 import ErrorBoundary from './components/ErrorBoundary';
 import DashboardPage from './pages/DashboardPage';
 import WorkoutPage from './pages/WorkoutPage';
@@ -30,7 +30,43 @@ function OfflineBanner() {
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
   }, []);
 
-  useEffect(() => beobachten(setWartend), []);
+  // Die Beobachter melden jede Aenderung der Schlange, also auch das
+  // Ablegen eines abgelehnten Auftrags. Deshalb hier mitlesen.
+  const [abgelehntListe, setAbgelehntListe] = useState(abgelehnt);
+  const [details, setDetails] = useState(false);
+  useEffect(() => beobachten(n => { setWartend(n); setAbgelehntListe(abgelehnt()); }), []);
+
+  if (abgelehntListe.length > 0) {
+    const n = abgelehntListe.length;
+    return (
+      <div style={{
+        position: 'fixed', top: 'var(--kopf-hoehe)', left: 0, right: 0, zIndex: 140,
+        background: 'var(--danger)', color: 'var(--auf-primary)',
+        padding: '6px 12px', fontSize: '0.8rem', fontWeight: 600, textAlign: 'center',
+      }}>
+        {n === 1 ? 'Ein Eintrag wurde' : `${n} Einträge wurden`} beim Nachtragen nicht übernommen.{' '}
+        <button type="button" onClick={() => setDetails(d => !d)}
+          style={{ textDecoration: 'underline', fontWeight: 600 }}>
+          {details ? 'Weniger' : 'Was?'}
+        </button>{' '}
+        <button type="button" onClick={() => { abgelehntLeeren(); setDetails(false); }}
+          style={{ textDecoration: 'underline', fontWeight: 600 }}>
+          Ausblenden
+        </button>
+        {details && (
+          <ul style={{ textAlign: 'left', fontWeight: 400, marginTop: 6, maxHeight: '40vh', overflowY: 'auto' }}>
+            {abgelehntListe.map(a => (
+              <li key={a.id} style={{ marginBottom: 4 }}>
+                {new Date(a.am).toLocaleString('de')}: {a.method} {a.path} ({a.status})
+                {a.body != null && <> mit {JSON.stringify(a.body)}</>}
+                {a.meldung && <>, Antwort {a.meldung}</>}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  }
 
   if (!offline && wartend === 0) return null;
 
@@ -42,9 +78,10 @@ function OfflineBanner() {
 
   return (
     <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
+      // Unter dem Kopf, nicht darueber: sonst deckt die Meldung den App-Namen.
+      position: 'fixed', top: 'var(--kopf-hoehe)', left: 0, right: 0, zIndex: 140,
       background: offline ? 'var(--warning)' : 'var(--primary)',
-      color: offline ? '#000' : '#fff', textAlign: 'center',
+      color: 'var(--auf-primary)', textAlign: 'center',
       padding: '6px 12px', fontSize: '0.8rem', fontWeight: 600,
     }}>
       {text}
@@ -58,6 +95,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      <saganta-kopf app="fitness"></saganta-kopf>
       <OfflineBanner />
       <Routes>
         <Route path="/" element={<DashboardPage />} />

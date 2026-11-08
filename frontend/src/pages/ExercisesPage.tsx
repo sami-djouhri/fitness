@@ -154,7 +154,7 @@ export default function ExercisesPage() {
                 {ex.primary_muscles.length > 0 && (
                   <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
                     {ex.primary_muscles.map(m => (
-                      <span key={m} className="chip" style={{ fontSize: '0.7rem' }}>{m}</span>
+                      <span key={m} className="chip" style={{ fontSize: '0.75rem' }}>{m}</span>
                     ))}
                   </div>
                 )}

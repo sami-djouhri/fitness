@@ -167,6 +167,8 @@ export default function RestTimer({ seconds = 90, onComplete, onDismiss }: Props
 
         {/* Time display */}
         <div
+          role="timer"
+          aria-live="off"
           style={{
             textAlign: 'center',
             zIndex: 10,
@@ -177,7 +179,9 @@ export default function RestTimer({ seconds = 90, onComplete, onDismiss }: Props
               fontSize: '3rem',
               fontWeight: 'bold',
               color: isCompleted ? 'var(--success)' : 'var(--primary)',
-              fontFamily: 'monospace',
+              // Hausschrift mit Tabellenziffern statt Systemschrift `monospace`:
+              // die Ziffern stehen trotzdem still, wenn die Zeit läuft.
+              fontVariantNumeric: 'tabular-nums',
               transition: 'color 0.3s ease',
             }}
           >
@@ -213,6 +217,7 @@ export default function RestTimer({ seconds = 90, onComplete, onDismiss }: Props
             onClick={handleSubtractTime}
             style={{
               padding: '8px 16px',
+              minHeight: 44,
               background: 'var(--bg-card)',
               border: '1px solid var(--border)',
               color: 'var(--text)',
@@ -244,9 +249,10 @@ export default function RestTimer({ seconds = 90, onComplete, onDismiss }: Props
             onClick={handleAddTime}
             style={{
               padding: '8px 16px',
+              minHeight: 44,
               background: 'var(--primary)',
               border: 'none',
-              color: '#fff',
+              color: 'var(--auf-primary)',
               borderRadius: 'var(--radius)',
               cursor: 'pointer',
               fontSize: '1rem',
@@ -280,6 +286,7 @@ export default function RestTimer({ seconds = 90, onComplete, onDismiss }: Props
         onClick={handleSkip}
         style={{
           padding: '10px 24px',
+          minHeight: 44,
           background: 'transparent',
           border: '1px solid var(--text-muted)',
           color: 'var(--text-muted)',

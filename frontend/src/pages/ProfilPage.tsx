@@ -139,6 +139,7 @@ export default function ProfilPage() {
           <button
             key={wert}
             className={`wahl ${profil.ziel === wert ? 'aktiv' : ''}`}
+            aria-pressed={profil.ziel === wert}
             onClick={() => speichern({ ziel: wert })}
           >
             <strong>{name}</strong>
@@ -153,6 +154,7 @@ export default function ProfilPage() {
           <button
             key={wert}
             className={`wahl ${profil.erfahrung === wert ? 'aktiv' : ''}`}
+            aria-pressed={profil.erfahrung === wert}
             onClick={() => speichern({ erfahrung: wert })}
           >
             <strong>{name}</strong>
