@@ -66,3 +66,29 @@ def test_workout_with_rating(client):
     w = client.post("/api/workouts", json={"name": "Test"}).json()
     r = client.put(f"/api/workouts/{w['id']}", json={"rating": 4})
     assert r.json()["rating"] == 4
+
+
+def test_supersatz_loesen_mit_null(client):
+    """Ausdruecklich null loest den Supersatz, ein fehlendes Feld nicht."""
+    eid = _create_exercise(client)
+    w = client.post("/api/workouts", json={"name": "Test"}).json()
+    s = client.post(f"/api/workouts/{w['id']}/sets", json={
+        "exercise_id": eid, "set_number": 1, "weight_kg": 60, "reps": 10,
+        "group_id": "ss-1",
+    }).json()
+    assert s["group_id"] == "ss-1"
+
+    # Feld fehlt: Gruppe bleibt.
+    r = client.put(f"/api/workouts/sets/{s['id']}", json={"reps": 9})
+    assert r.status_code == 200
+    assert r.json()["group_id"] == "ss-1"
+
+    # Neue Gruppe setzen geht weiter.
+    r = client.put(f"/api/workouts/sets/{s['id']}", json={"group_id": "ss-2"})
+    assert r.json()["group_id"] == "ss-2"
+
+    # Ausdruecklich null: aufgeloest.
+    r = client.put(f"/api/workouts/sets/{s['id']}", json={"group_id": None})
+    assert r.status_code == 200
+    assert r.json()["group_id"] is None
+    assert r.json()["reps"] == 9

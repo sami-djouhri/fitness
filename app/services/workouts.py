@@ -251,10 +251,16 @@ class WorkoutService:
             ws.is_completed = data.is_completed
             ws.completed_at = datetime.now(timezone.utc) if data.is_completed else None
         for field in ("weight_kg", "reps", "duration_seconds", "distance_meters",
-                      "rpe", "is_warmup", "set_type", "group_id", "notes"):
+                      "rpe", "is_warmup", "set_type", "notes"):
             val = getattr(data, field)
             if val is not None:
                 setattr(ws, field, val)
+        # group_id unterscheidet "nicht gesagt" von "ausdruecklich null":
+        # ein mitgeschicktes null loest den Supersatz auf, ein fehlendes Feld
+        # laesst ihn stehen. Bis 2026-11-14 lief group_id durch die Schleife
+        # oben, und ein Supersatz liess sich nie wieder loesen (Web wie App).
+        if "group_id" in data.model_fields_set:
+            ws.group_id = data.group_id
 
         # Sync is_warmup <-> set_type
         if data.set_type is not None:

@@ -1,7 +1,7 @@
 /* ERZEUGT, NICHT VON HAND AENDERN.
  *
  * Quellen: saganta/packages/ui/src/apps.ts, packages/ui/src/components/Icon.svelte,
- * packages/design-tokens/src/theme.css (Pruefsumme 5ad910388c5e)
+ * packages/design-tokens/src/theme.css (Pruefsumme 199290c3dfa2)
  * Werkzeug: saganta/scripts/kopf-erzeugen.py --schreiben
  *
  * Der Saganta-Kopf fuer Dienste ausserhalb der SvelteKit-Suite, Gegenstueck
