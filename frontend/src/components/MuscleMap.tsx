@@ -1,28 +1,63 @@
-import { useState, useCallback } from 'react';
-import type { MuscleGroupFreshness } from '../types';
+import { useState } from 'react';
+import type { Gruppenfrische } from '../types';
+
+/**
+ * Muskelkarte für die Startseite: vorne und hinten, je Region ein Zustand.
+ *
+ * Liegt seit Juni im Repo und war nirgends eingebunden (Entscheid
+ * 24.10.: einbinden, nicht löschen). Eingebunden am 2026-11-21, dabei
+ * umgestellt auf `/analyse/frische`, dieselbe Auskunft, aus der die
+ * Startseite "belastet" und die Körperseite ihre Färbung liest. Vorher hing
+ * sie an `/progress/muscle-freshness` mit eigenen, fest eingebauten Farben,
+ * also an einer zweiten Antwort auf dieselbe Frage. Die Regionen beider
+ * Quellen sind dieselben (chest, back, quads ...), gemessen am Live-Dienst.
+ *
+ * Eine Region fasst mehrere Gruppen zusammen (Schultern = drei Deltas). Sie
+ * zeigt die am stärksten belastete Gruppe: wer die Schulter heute schont,
+ * schont alle drei Köpfe.
+ */
 
 interface Props {
-  regions: MuscleGroupFreshness[];
-  selectedRegion: string | null;
-  onRegionClick: (regionId: string) => void;
-  onMuscleClick?: (muscleName: string, regionId: string) => void;
+  frische: Gruppenfrische[];
 }
 
-/* ------------------------------------------------------------------ */
-/*  Constants                                                          */
-/* ------------------------------------------------------------------ */
+type Zustand = 'belastet' | 'erholt' | 'bereit' | 'ruht';
 
-const LEGEND = [
-  { color: '#22c55e', label: 'Frisch' },
-  { color: '#4ade80', label: 'Bereit' },
-  { color: '#facc15', label: 'Fällig' },
-  { color: '#f97316', label: 'Überfällig' },
-  { color: '#ef4444', label: 'Vernachlässigt' },
-  { color: '#475569', label: 'Nie' },
-];
+const ZUSTAND: Record<Zustand, { farbe: string; wort: string }> = {
+  belastet: { farbe: 'var(--danger)', wort: 'belastet' },
+  erholt: { farbe: 'var(--warning)', wort: 'erholt sich' },
+  bereit: { farbe: 'var(--success)', wort: 'bereit' },
+  ruht: { farbe: 'var(--text-dim)', wort: '14 Tage nicht trainiert' },
+};
 
-const DEFAULT_COLOR = '#475569';
-const BODY_COLOR = '#3a4252';
+const KOERPER_FARBE = 'var(--bg-input)';
+
+interface Region {
+  zustand: Zustand;
+  namen: string[];
+  bereitInStunden: number;
+}
+
+/** Fasst die Gruppen je Region zusammen. Exportiert für den Test. */
+export function regionen(frische: Gruppenfrische[]): Record<string, Region> {
+  const aus: Record<string, Region> = {};
+  const rang: Record<Zustand, number> = { ruht: 0, bereit: 1, erholt: 2, belastet: 3 };
+  for (const g of frische) {
+    const zustand: Zustand = g.stunden_seit == null ? 'ruht'
+      : g.frische < 0.5 ? 'belastet'
+      : g.frische < 0.9 ? 'erholt'
+      : 'bereit';
+    const r = aus[g.region];
+    if (!r) {
+      aus[g.region] = { zustand, namen: [g.name], bereitInStunden: g.bereit_in_stunden };
+      continue;
+    }
+    r.namen.push(g.name);
+    if (rang[zustand] > rang[r.zustand]) r.zustand = zustand;
+    r.bereitInStunden = Math.max(r.bereitInStunden, g.bereit_in_stunden);
+  }
+  return aus;
+}
 
 /* ------------------------------------------------------------------ */
 /*  Muscle polygon definitions (from react-body-highlighter)           */
@@ -252,167 +287,58 @@ const BACK_BODY: MusclePoly[] = [
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-export default function MuscleMap({ regions, selectedRegion, onRegionClick, onMuscleClick }: Props) {
-  const [view, setView] = useState<'front' | 'back'>('front');
-  const [hoveredMuscle, setHoveredMuscle] = useState<string | null>(null);
-  const [tooltip, setTooltip] = useState<{ label: string; x: number; y: number } | null>(null);
+export default function MuscleMap({ frische }: Props) {
+  const [ansicht, setAnsicht] = useState<'front' | 'back'>('front');
+  const [gewaehlt, setGewaehlt] = useState<MusclePoly | null>(null);
+  const stand = regionen(frische);
+  const muskeln = ansicht === 'front' ? FRONT_BODY : BACK_BODY;
 
-  const colorMap: Record<string, string> = {};
-  const daysMap: Record<string, number | null> = {};
-  for (const r of regions) {
-    colorMap[r.region] = r.color;
-    daysMap[r.region] = r.days_since_trained;
-  }
-
-  const muscles = view === 'front' ? FRONT_BODY : BACK_BODY;
-
-  const getFill = useCallback((region: string) => {
-    if (!region) return BODY_COLOR;
-    return colorMap[region] || DEFAULT_COLOR;
-  }, [colorMap]);
-
-  const shadeBias = useCallback((muscleId: string): number => {
-    if (/short|inner|long_l|long_r|lat_l|lat_r/.test(muscleId)) return -0.08;
-    return 0.0;
-  }, []);
-
-  const getOpacity = useCallback((region: string, muscleId: string) => {
-    if (!region) return 0.6;
-    if (hoveredMuscle === muscleId) return 1;
-    if (selectedRegion === region) return 0.95 + shadeBias(muscleId);
-    return 0.5 + shadeBias(muscleId);
-  }, [hoveredMuscle, selectedRegion, shadeBias]);
-
-  const getStroke = useCallback((region: string, muscleId: string) => {
-    if (!region) return 'rgba(255,255,255,0.05)';
-    if (hoveredMuscle === muscleId) return '#fff';
-    if (selectedRegion === region) return '#60a5fa';
-    return 'rgba(0,0,0,0.45)';
-  }, [hoveredMuscle, selectedRegion]);
-
-  const getStrokeWidth = useCallback((region: string, muscleId: string) => {
-    if (!region) return 0.2;
-    if (hoveredMuscle === muscleId) return 0.8;
-    if (selectedRegion === region) return 0.5;
-    return 0.4;
-  }, [hoveredMuscle, selectedRegion]);
-
-  const getDaysText = (region: string): string => {
-    const days = daysMap[region];
-    if (days === null || days === undefined) return 'Noch nie trainiert';
-    if (days === 0) return 'Heute trainiert';
-    if (days === 1) return 'Gestern trainiert';
-    return `Vor ${days} Tagen`;
-  };
-
-  const handleMouseEnter = (muscle: MusclePoly, e: React.MouseEvent) => {
-    if (!muscle.region) return;
-    setHoveredMuscle(muscle.id);
-    const rect = (e.currentTarget as SVGElement).closest('svg')?.getBoundingClientRect();
-    if (rect) {
-      const daysInfo = getDaysText(muscle.region);
-      setTooltip({
-        label: `${muscle.label}: ${daysInfo}`,
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top - 28,
-      });
-    }
-  };
-
-  const handleMouseMove = (muscle: MusclePoly, e: React.MouseEvent) => {
-    if (!muscle.region) return;
-    const rect = (e.currentTarget as SVGElement).closest('svg')?.getBoundingClientRect();
-    if (rect) {
-      const daysInfo = getDaysText(muscle.region);
-      setTooltip({
-        label: `${muscle.label}: ${daysInfo}`,
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top - 28,
-      });
-    }
-  };
-
-  const handleMouseLeave = () => {
-    setHoveredMuscle(null);
-    setTooltip(null);
-  };
-
-  const handleClick = (muscle: MusclePoly) => {
-    if (!muscle.region) return;
-    if (onMuscleClick) {
-      onMuscleClick(muscle.id, muscle.region);
-    } else {
-      onRegionClick(muscle.region);
-    }
-  };
+  const zeile = (() => {
+    if (!gewaehlt || !gewaehlt.region) return 'Tippe einen Muskel an.';
+    const r = stand[gewaehlt.region];
+    if (!r) return `${gewaehlt.label}: keine Angabe`;
+    const rest = r.zustand === 'belastet' || r.zustand === 'erholt'
+      ? `, bereit in etwa ${Math.max(1, Math.round(r.bereitInStunden))} h` : '';
+    return `${gewaehlt.label}: ${ZUSTAND[r.zustand].wort}${rest}`;
+  })();
 
   return (
     <div className="muscle-map-container">
-      {/* View toggle */}
-      <div className="muscle-map-toggle">
-        <button
-          className={`toggle-btn ${view === 'front' ? 'active' : ''}`}
-          onClick={() => setView('front')}
-        >
-          Vorne
-        </button>
-        <button
-          className={`toggle-btn ${view === 'back' ? 'active' : ''}`}
-          onClick={() => setView('back')}
-        >
-          Hinten
-        </button>
+      <div className="muscle-map-toggle" role="group" aria-label="Ansicht">
+        <button className={`toggle-btn ${ansicht === 'front' ? 'active' : ''}`} aria-pressed={ansicht === 'front'}
+                onClick={() => { setAnsicht('front'); setGewaehlt(null); }}>Vorne</button>
+        <button className={`toggle-btn ${ansicht === 'back' ? 'active' : ''}`} aria-pressed={ansicht === 'back'}
+                onClick={() => { setAnsicht('back'); setGewaehlt(null); }}>Hinten</button>
       </div>
-
-      {/* SVG Body */}
-      <div className="muscle-map-body" style={{ position: 'relative' }}>
-        <svg viewBox="-2 -2 104 224">
-          {/* Muscle groups */}
-          {muscles.map(muscle => (
-            <polygon
-              key={muscle.id}
-              points={muscle.points}
-              data-region={muscle.region}
-              data-muscle={muscle.id}
-              data-selected={muscle.region && selectedRegion === muscle.region ? 'true' : undefined}
-              fill={getFill(muscle.region)}
-              opacity={getOpacity(muscle.region, muscle.id)}
-              stroke={getStroke(muscle.region, muscle.id)}
-              strokeWidth={getStrokeWidth(muscle.region, muscle.id)}
-              strokeLinejoin="round"
-              style={{
-                cursor: muscle.region ? 'pointer' : 'default',
-                transition: 'opacity 0.15s, stroke 0.15s, fill 0.15s',
-              }}
-              onMouseEnter={(e) => handleMouseEnter(muscle, e)}
-              onMouseMove={(e) => handleMouseMove(muscle, e)}
-              onMouseLeave={handleMouseLeave}
-              onClick={() => handleClick(muscle)}
-            />
-          ))}
+      <div className="muscle-map-body" style={{ maxWidth: 220, margin: '0 auto' }}>
+        <svg viewBox="-2 -2 104 224" role="img" aria-label={`Muskelkarte ${ansicht === 'front' ? 'vorne' : 'hinten'}`}>
+          {muskeln.map((m) => {
+            const r = m.region ? stand[m.region] : undefined;
+            const istGewaehlt = gewaehlt?.id === m.id;
+            return (
+              <polygon
+                key={m.id}
+                points={m.points}
+                style={{
+                  fill: r ? ZUSTAND[r.zustand].farbe : KOERPER_FARBE,
+                  opacity: m.region ? (istGewaehlt ? 1 : 0.75) : 0.6,
+                  stroke: istGewaehlt ? 'var(--text)' : 'rgba(0,0,0,0.45)',
+                  strokeWidth: istGewaehlt ? 0.8 : 0.4,
+                  cursor: m.region ? 'pointer' : 'default',
+                }}
+                strokeLinejoin="round"
+                onClick={() => m.region && setGewaehlt(m)}
+              />
+            );
+          })}
         </svg>
-
-        {/* Tooltip */}
-        {tooltip && (
-          <div
-            className="muscle-tooltip"
-            style={{
-              left: tooltip.x,
-              top: tooltip.y,
-              transform: 'translateX(-50%)',
-            }}
-          >
-            {tooltip.label}
-          </div>
-        )}
       </div>
-
-      {/* Legend */}
+      <div className="klein" style={{ textAlign: 'center', minHeight: '1.4em', marginTop: 6 }} aria-live="polite">{zeile}</div>
       <div className="muscle-legend">
-        {LEGEND.map(({ color, label }) => (
-          <div key={color} className="muscle-legend-item">
-            <span className="muscle-legend-dot" style={{ background: color }} />
-            <span>{label}</span>
+        {(Object.keys(ZUSTAND) as Zustand[]).map((z) => (
+          <div key={z} className="muscle-legend-item">
+            <span className="muscle-legend-dot" style={{ background: ZUSTAND[z].farbe }} />
+            <span>{ZUSTAND[z].wort}</span>
           </div>
         ))}
       </div>

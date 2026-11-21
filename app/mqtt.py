@@ -23,6 +23,7 @@ Fehlschlaege, und ``/health`` gibt den Stand aus.
 from __future__ import annotations
 
 import json
+import time
 import logging
 from typing import Any
 
@@ -31,6 +32,10 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 TOPIC_PREFIX = "homelab"
+
+
+# Wie lange publish() auf die Bestaetigung (PUBACK) des Brokers wartet.
+SENDE_FRIST_S = 5
 
 
 def topic(entity: str, action: str) -> str:
@@ -70,8 +75,20 @@ class MqttPublisher:
         )
         if settings.MQTT_USERNAME:
             client.username_pw_set(settings.MQTT_USERNAME, settings.mqtt_passwort())
+        antwort: list[str] = []
+        client.on_connect = lambda _c, _u, _f, grund, _p: antwort.append(str(grund))
         client.connect(settings.MQTT_HOST, settings.MQTT_PORT, keepalive=60)
         client.loop_start()
+        # connect() oeffnet nur die TCP-Verbindung. Ob der Broker die Anmeldung
+        # annimmt, steht erst im CONNACK; ohne dieses Warten zeigte /health
+        # "verbunden", waehrend jede Meldung im Leeren landete (2026-11-21).
+        frist = time.monotonic() + SENDE_FRIST_S
+        while not client.is_connected() and time.monotonic() < frist:
+            time.sleep(0.05)
+        if not client.is_connected():
+            client.loop_stop()
+            grund = antwort[-1] if antwort else "keine Antwort"
+            raise RuntimeError(f"Broker nahm die Anmeldung nicht an ({grund})")
         self._client = client
         logger.info("MQTT verbunden (%s:%s)", settings.MQTT_HOST, settings.MQTT_PORT)
 
@@ -93,10 +110,15 @@ class MqttPublisher:
         try:
             self._verbinden()
             ergebnis = self._client.publish(ziel, json.dumps(payload, default=str), qos=1)
-            # rc 0 heisst angenommen. Ein spaeterer Verbindungsabbruch faellt
-            # beim naechsten Lauf auf, dafuer ist der Zaehler da.
             if ergebnis.rc != 0:
                 raise RuntimeError(f"Broker lehnte ab (rc={ergebnis.rc})")
+            # Auf die Bestaetigung des Brokers warten. rc 0 heisst nur "in die
+            # Warteschlange gelegt": der Lauf per docker exec (app/anstoss_lauf.py)
+            # endete am 2026-11-21 davor, meldete "gesendet" und die Nachricht
+            # ging nie hinaus. Der Merker hielt sie dann 20 h zurueck.
+            ergebnis.wait_for_publish(timeout=SENDE_FRIST_S)
+            if not ergebnis.is_published():
+                raise RuntimeError(f"keine Bestaetigung binnen {SENDE_FRIST_S} s")
             self.letzter_fehler = None
             return True
         except Exception as fehler:

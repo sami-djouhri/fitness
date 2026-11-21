@@ -1,7 +1,7 @@
 /* ERZEUGT, NICHT VON HAND AENDERN.
  *
  * Quellen: saganta/packages/ui/src/apps.ts, packages/ui/src/components/Icon.svelte,
- * packages/design-tokens/src/theme.css (Pruefsumme 199290c3dfa2)
+ * packages/design-tokens/src/theme.css (Pruefsumme 8a0640a930da)
  * Werkzeug: saganta/scripts/kopf-erzeugen.py --schreiben
  *
  * Der Saganta-Kopf fuer Dienste ausserhalb der SvelteKit-Suite, Gegenstueck
@@ -198,6 +198,16 @@
     "subHeim": null,
     "nurHeim": true,
     "signatur": "repeating-linear-gradient(90deg, currentColor 0 12px, transparent 12px 16px, currentColor 16px 17px, transparent 17px 21px)"
+  },
+  {
+    "id": "walle",
+    "name": "Wall-E",
+    "beschreibung": "Suchziele, Funde und Preise für Hardware, eBay-Beobachtungsliste.",
+    "icon": "target",
+    "sub": "walle",
+    "subHeim": null,
+    "nurHeim": true,
+    "signatur": "repeating-linear-gradient(90deg, currentColor 0 2px, transparent 2px 5px, currentColor 5px 11px, transparent 11px 14px)"
   }
 ];
 
@@ -217,6 +227,7 @@
   "map": "<path d=\"M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z\"/><path d=\"M15 5.764v15\"/><path d=\"M9 3.236v15\"/>",
   "newspaper": "<path d=\"M15 18h-5\"/><path d=\"M18 14h-8\"/><path d=\"M21 3v18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2\"/><path d=\"M7 3h14a2 2 0 0 1 2 2v0\"/><rect width=\"8\" height=\"4\" x=\"10\" y=\"6\" rx=\"1\"/>",
   "shopping-cart": "<circle cx=\"8\" cy=\"21\" r=\"1\"/><circle cx=\"19\" cy=\"21\" r=\"1\"/><path d=\"M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12\"/>",
+  "target": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><circle cx=\"12\" cy=\"12\" r=\"6\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/>",
   "trending-up": "<polyline points=\"22 7 13.5 15.5 8.5 10.5 2 17\"/><polyline points=\"16 7 22 7 22 13\"/>",
   "users": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/>",
   "utensils": "<path d=\"M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2\"/><path d=\"M7 2v20\"/><path d=\"M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7\"/>"

@@ -336,6 +336,12 @@ class WorkoutUpdate(BaseModel):
     finished_at: datetime | None = None
     notes: str | None = Field(None, max_length=500)
     rating: int | None = Field(None, ge=1, le=5)
+    # Bereitschaft auch nach dem Start (seit 2026-11-21): der Start ist ein
+    # Tipp, die drei Skalen stehen als freiwillige Zeile im Training.
+    fatigue_level: int | None = Field(None, ge=1, le=5)
+    sleep_quality: int | None = Field(None, ge=1, le=5)
+    motivation: int | None = Field(None, ge=1, le=5)
+    pre_notes: str | None = Field(None, max_length=500)
 
 
 class PlanTargetOut(BaseModel):

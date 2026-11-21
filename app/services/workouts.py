@@ -194,6 +194,10 @@ class WorkoutService:
             workout.notes = data.notes
         if data.rating is not None:
             workout.rating = data.rating
+        for feld in ("fatigue_level", "sleep_quality", "motivation", "pre_notes"):
+            wert = getattr(data, feld)
+            if wert is not None:
+                setattr(workout, feld, wert)
         return workout
 
     def finish(self, workout_id: int) -> Workout:

@@ -1,4 +1,4 @@
-import { einreihen, naechsteErsatznummer } from './warteschlange';
+import { abspielen, einreihen, naechsteErsatznummer } from './warteschlange';
 
 const BASE = '/api';
 
@@ -54,6 +54,9 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   }
 }
 
+/** Pfadstueck mit Ersatznummer, etwa `/workouts/-3/sets` oder `/workouts/sets/-12`. */
+export const ERSATZ_IM_PFAD = /\/-\d+(?=\/|\?|$)/;
+
 /**
  * Mutation, die einen Netzausfall uebersteht: scheitert sie am Netz, wandert
  * sie ins Journal und wird spaeter nachgetragen. ``ersatz`` liefert das, was
@@ -65,6 +68,18 @@ async function mutation<T>(
   body: unknown | undefined,
   ersatz?: (ersatzId: number) => T,
 ): Promise<T> {
+  // Eine Ersatznummer im Pfad heisst: das Ziel existiert beim Dienst noch
+  // nicht, sein Anlegen wartet selbst in der Schlange. Bis 2026-11-21 ging ein
+  // solcher Aufruf trotzdem direkt los, sobald das Netz zurueck war, bekam 404
+  // und die Aenderung war weg (Satz offline angelegt, online abgehakt). Jetzt
+  // reiht er sich hinter das Anlegen ein und wird dort umgeschrieben.
+  if (ERSATZ_IM_PFAD.test(path)) {
+    const ersatzId = ersatz ? naechsteErsatznummer() : undefined;
+    einreihen({ method, path, body, ersatzId });
+    void abspielen();
+    if (ersatz && ersatzId != null) return ersatz(ersatzId);
+    return undefined as T;
+  }
   try {
     return await request<T>(method, path, body);
   } catch (fehler) {
@@ -87,5 +102,7 @@ export const api = {
   postRobust: <T>(path: string, body: unknown, ersatz: (ersatzId: number) => T) =>
     mutation<T>('POST', path, body, ersatz),
   putRobust: <T>(path: string, body: unknown) => mutation<T>('PUT', path, body),
+  /** POST ohne Ergebnis, das die Oberflaeche braucht (Beenden). */
+  postNachtragbar: (path: string, body?: unknown) => mutation<void>('POST', path, body),
   delRobust: (path: string) => mutation<void>('DELETE', path, undefined),
 };

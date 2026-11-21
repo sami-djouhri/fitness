@@ -119,3 +119,89 @@ test('Ersatznummern im Rumpf werden ersetzt, andere Zahlen nicht', async () => {
   await w.abspielen();
   assert.deepEqual(aufrufe[1].body, { group_id: 300, reps: 12 });
 });
+
+// --- Training ohne Netz starten (2026-11-21) -------------------------------
+
+const START = {
+  name: 'Legs B',
+  plan_day_id: 4,
+  uebungen: [
+    { exercise_id: 11, saetze: 2, wdh: 8, gewicht_kg: 40 },
+    { exercise_id: 12, saetze: 1, wdh: 12, gewicht_kg: null },
+  ],
+  namen: { 11: 'Kniebeuge', 12: 'Wadenheben' },
+};
+
+test('offline gestartet: Training und geplante Saetze kommen in Reihenfolge beim Dienst an', async () => {
+  const w = await laden();
+  const o = await import('../src/offlinetraining');
+  const lokal = o.offlineStarten(START);
+  assert.ok(lokal.id < 0);
+  assert.equal(lokal.sets.length, 3);
+  assert.ok(lokal.sets.every(s => !s.is_completed && s.id < 0));
+  assert.deepEqual(o.lokalLaden(lokal.id)?.name, 'Legs B');
+
+  // Ersten Satz offline abhaken: PUT auf seine Ersatznummer.
+  w.einreihen({ method: 'PUT', path: `/workouts/sets/${lokal.sets[0].id}`, body: { is_completed: true } });
+
+  antworten.push({ status: 201, body: { id: 50 } });
+  for (let i = 0; i < 3; i++) antworten.push({ status: 201, body: { id: 101 + i } });
+  antworten.push({ status: 200, body: {} });
+  const bilanz = await w.abspielen();
+
+  assert.equal(bilanz.erledigt, 5);
+  assert.equal(aufrufe[0].path, '/workouts');
+  assert.equal((aufrufe[0].body as any).prefill, false, 'sonst legt der Dienst eigene Platzhalter daneben');
+  assert.deepEqual(aufrufe.slice(1, 4).map(a => a.path), ['/workouts/50/sets', '/workouts/50/sets', '/workouts/50/sets']);
+  assert.equal((aufrufe[1].body as any).is_completed, false);
+  assert.equal(aufrufe[4].path, '/workouts/sets/101');
+  assert.equal(o.lokalLaden(lokal.id), null, 'die lokale Kopie hat nach dem Nachtragen ausgedient');
+});
+
+test('offline ohne bekannte Uebungen startet nichts und sagt warum', async () => {
+  await laden();
+  const o = await import('../src/offlinetraining');
+  assert.throws(() => o.offlineStarten({ ...START, uebungen: [] }), /Vorschlag/);
+  assert.equal(speicher.get('fitness-warteschlange-v1') ?? '[]', '[]');
+});
+
+test('eine Aenderung an einer Ersatznummer geht nie direkt an den Dienst', async () => {
+  // Vorher: Netz wieder da, Schlange noch nicht nachgetragen, PUT auf /sets/-5
+  // ging direkt los, bekam 404 und war weg.
+  const w = await laden();
+  const { api } = await import('../src/api');
+  antworten.push({ status: 404, body: { error: 'Satz nicht gefunden' } });
+  // Gegen den alten Stand wirft dieser Aufruf (Direktweg, 404 ist kein Netzfehler).
+  await assert.doesNotReject(api.putRobust('/workouts/sets/-5', { is_completed: true }));
+  await new Promise(r => setTimeout(r, 0));
+  // Er lief ueber die Schlange: dort wird ein 404 abgelegt, nicht geworfen.
+  assert.equal(w.abgelehnt().length, 1);
+  assert.equal(w.abgelehnt()[0].path, '/workouts/sets/-5');
+});
+
+test('der gemerkte Vorschlag traegt seinen Stand', async () => {
+  const o = await import('../src/offlinetraining');
+  o.jetztMerken({ titel: 'Push A', uebungen: [] } as any);
+  const v = o.jetztAusVorrat();
+  assert.equal(v?.jetzt.titel, 'Push A');
+  assert.ok(v && !Number.isNaN(Date.parse(v.am)));
+});
+
+// --- Muskelkarte (2026-11-21) ----------------------------------------------
+
+test('eine Region zeigt ihre am staerksten belastete Gruppe', async () => {
+  const { regionen } = await import('../src/components/MuscleMap');
+  const g = (gruppe: string, region: string, frische: number, stunden: number | null, bereit = 0) =>
+    ({ gruppe, name: gruppe, region, frische, stunden_seit: stunden, bereit_in_stunden: bereit, letzte_saetze: 0 });
+  const r = regionen([
+    g('front_delta', 'shoulders', 0.95, 30),
+    g('seit_delta', 'shoulders', 0.3, 10, 20),
+    g('hinter_delta', 'shoulders', 1, null),
+    g('waden', 'calves', 1, null),
+    g('brust', 'chest', 0.7, 20, 8),
+  ]);
+  assert.equal(r.shoulders.zustand, 'belastet');
+  assert.equal(r.shoulders.bereitInStunden, 20);
+  assert.equal(r.calves.zustand, 'ruht', 'nie trainiert ist nicht "bereit"');
+  assert.equal(r.chest.zustand, 'erholt');
+});

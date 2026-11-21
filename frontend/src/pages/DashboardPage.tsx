@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { api } from '../api';
+import { api, NetzFehler } from '../api';
+import { jetztAusVorrat, jetztMerken, laufendeLokale } from '../offlinetraining';
 import type {
   DashboardSummary, Gruppenfrische, Gruppenwoche, PersonalRecord,
   Profil, TrainingJetzt,
 } from '../types';
 import { startzustand, ziel } from '../trainingjetzt';
 import { dez } from '../zahlformat';
+import MuscleMap from '../components/MuscleMap';
 
 /**
  * Heute: eine Frage, eine Antwort, ein Knopf.
@@ -49,6 +51,8 @@ export default function DashboardPage() {
   const [prs, setPrs] = useState<PersonalRecord[]>([]);
   const [profil, setProfil] = useState<Profil | null>(null);
   const [startet, setStartet] = useState(false);
+  const [vorratAm, setVorratAm] = useState<string | null>(null);
+  const offlineLaufend = laufendeLokale();
 
   useEffect(() => {
     api.get<DashboardSummary>('/progress/summary').then(setSummary).catch(() => {});
@@ -61,7 +65,13 @@ export default function DashboardPage() {
   useEffect(() => {
     api.get<TrainingJetzt>(
       dauer === null ? '/training/jetzt' : `/training/jetzt?minuten=${dauer}`)
-      .then(setJetzt).catch(() => {});
+      .then((j) => { setJetzt(j); setVorratAm(null); jetztMerken(j); })
+      .catch((e) => {
+        // Ohne Netz der zuletzt gemerkte Vorschlag, mit seinem Stand. Starten
+        // geht trotzdem (offlinetraining.ts), nachgetragen wird spaeter.
+        const v = e instanceof NetzFehler ? jetztAusVorrat() : null;
+        if (v) { setJetzt(v.jetzt); setVorratAm(v.am); }
+      });
   }, [dauer]);
 
   // Welche Dauer angezeigt wird: die gewählte, sonst die, mit der geantwortet
@@ -111,6 +121,14 @@ export default function DashboardPage() {
         </Link>
       )}
 
+      {/* Offline begonnen und noch nicht beim Dienst: der Weg zurück hinein. */}
+      {offlineLaufend.map((w) => (
+        <Link key={w.id} to={`/workout/${w.id}`} className="karte hinweis" style={{ display: 'block' }}>
+          <strong>{w.name} läuft (ohne Netz begonnen)</strong>
+          <div className="klein">Weiter eintragen. Nachgetragen wird, sobald wieder Netz da ist.</div>
+        </Link>
+      ))}
+
       {/* --- Die Einheit für jetzt --- */}
       {jetzt && (
         <div className="heute-karte">
@@ -120,6 +138,11 @@ export default function DashboardPage() {
               : 'Vorschlag für heute'}
           </div>
           <div className="heute-titel">{jetzt.titel}</div>
+          {vorratAm && (
+            <div className="klein gedaempft">
+              Ohne Netz: Vorschlag vom {new Date(vorratAm).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}.
+            </div>
+          )}
           <div className="begruendung">{jetzt.begruendung}</div>
 
           {/* Die Zeit gilt für beide Wege, nicht nur ohne Plan. */}
@@ -253,6 +276,21 @@ export default function DashboardPage() {
             alle Zahlen
           </Link>
         </div>
+      )}
+
+      {/* Muskelkarte aus derselben Frische-Auskunft wie "Noch belastet" oben.
+          Das Modell kennt nur die Zeit seit der Belastung, nicht Schlaf oder
+          Essen; das steht deshalb darunter. */}
+      {frische.length > 0 && (
+        <>
+          <h2>Muskeln</h2>
+          <div className="karte">
+            <MuscleMap frische={frische} />
+            <div className="klein gedaempft" style={{ textAlign: 'center' }}>
+              Gerechnet aus der Zeit seit der letzten Belastung, nicht aus Schlaf oder Essen.
+            </div>
+          </div>
+        </>
       )}
 
       {prs.length > 0 && (

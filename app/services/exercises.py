@@ -8,6 +8,7 @@ from app.domain import DomainError
 from app.models import Exercise, ExerciseSelection, PlanExercise, WorkoutSet
 from app.schemas import ExerciseCreate, ExerciseUpdate
 from app.services.muscle_map import MUSCLE_TO_REGION, REGION_TO_MUSCLES
+from app.suchmuster import ESCAPE, enthaelt
 
 
 class ExerciseService:
@@ -55,12 +56,12 @@ class ExerciseService:
         if muster:
             q = q.filter(Exercise.muster == muster)
         if search:
-            pattern = f"%{search}%"
+            pattern = enthaelt(search)
             q = q.filter(
                 or_(
-                    Exercise.name.ilike(pattern),
-                    Exercise.primary_muscles_json.ilike(pattern),
-                    Exercise.secondary_muscles_json.ilike(pattern),
+                    Exercise.name.ilike(pattern, escape=ESCAPE),
+                    Exercise.primary_muscles_json.ilike(pattern, escape=ESCAPE),
+                    Exercise.secondary_muscles_json.ilike(pattern, escape=ESCAPE),
                 )
             )
         return q.order_by(Exercise.name).offset(skip).limit(limit).all()

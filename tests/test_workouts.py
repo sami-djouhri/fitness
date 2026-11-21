@@ -92,3 +92,15 @@ def test_supersatz_loesen_mit_null(client):
     assert r.status_code == 200
     assert r.json()["group_id"] is None
     assert r.json()["reps"] == 9
+
+
+def test_bereitschaft_nach_dem_start(client):
+    """Start ist ein Tipp, die Bereitschaft kommt danach als freiwillige Zeile."""
+    w = client.post("/api/workouts", json={"name": "Schnellstart"}).json()
+    assert w["fatigue_level"] is None
+    r = client.put(f"/api/workouts/{w['id']}", json={"fatigue_level": 2})
+    assert r.status_code == 200
+    r = client.put(f"/api/workouts/{w['id']}", json={"motivation": 4})
+    assert r.json()["fatigue_level"] == 2, "ein zweites Feld darf das erste nicht leeren"
+    assert r.json()["motivation"] == 4
+    assert client.put(f"/api/workouts/{w['id']}", json={"sleep_quality": 6}).status_code == 422

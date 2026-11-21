@@ -53,5 +53,9 @@ export function startzustand(jetzt: TrainingJetzt) {
       wdh: u.wdh,
       gewicht_kg: u.gewicht_kg,
     })),
+    // Fuer den Start ohne Netz (offlinetraining.ts): dort fehlt der Katalog,
+    // Namen und Pausen kommen deshalb aus derselben Auskunft.
+    pendingNamen: Object.fromEntries(jetzt.uebungen.map((u) => [u.exercise_id, u.name])),
+    pendingPausen: Object.fromEntries(jetzt.uebungen.map((u) => [u.exercise_id, u.pause_s])),
   };
 }

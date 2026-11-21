@@ -62,3 +62,11 @@ def test_search_exercises(client):
     r = client.get("/api/exercises?search=Bank")
     assert len(r.json()) == 1
     assert r.json()[0]["name"] == "Bankdrücken"
+
+
+def test_search_nimmt_platzhalter_woertlich(client):
+    """`%` und `_` aus der Eingabe sind Zeichen, keine LIKE-Platzhalter."""
+    client.post("/api/exercises", json={"name": "Bankdrücken", "category": "Brust", "equipment": "Langhantel"})
+    client.post("/api/exercises", json={"name": "Dip_Station", "category": "Brust", "equipment": "Körpergewicht"})
+    assert [e["name"] for e in client.get("/api/exercises", params={"search": "_"}).json()] == ["Dip_Station"]
+    assert client.get("/api/exercises", params={"search": "%"}).json() == []

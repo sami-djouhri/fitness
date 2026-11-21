@@ -1,13 +1,14 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { api } from '../api';
+import { api, NetzFehler } from '../api';
 import type { Workout, WorkoutSet, Exercise, PlanListItem, Plan, OverloadSuggestion, LastWeightEntry, TrainingJetzt, PlanTarget, StartUebung } from '../types';
 import { startzustand, ziel } from '../trainingjetzt';
 import { aufIdAufloesung } from '../warteschlange';
+import { jetztAusVorrat, jetztMerken, lokalEntfernen, lokalLaden, lokalSpeichern, namenAus, offlineStarten } from '../offlinetraining';
 import ExercisePicker from '../components/ExercisePicker';
 import SetRow from '../components/SetRow';
 import RestTimer from '../components/RestTimer';
-import ReadinessCheck from '../components/ReadinessCheck';
+import BereitschaftZeile from '../components/BereitschaftZeile';
 
 const SET_TYPES = [
   { value: 'normal', label: 'Normal' },
@@ -31,7 +32,12 @@ export default function WorkoutPage() {
   const [ratingValue, setRatingValue] = useState(0);
   const [showRating, setShowRating] = useState(false);
   const [jetzt, setJetzt] = useState<TrainingJetzt | null>(null);
-  const [pendingWorkout, setPendingWorkout] = useState<{ plan_day_id?: number; name?: string; exercise_ids?: number[]; uebungen?: StartUebung[] } | null>(null);
+  const [pendingWorkout, setPendingWorkout] = useState<{ plan_day_id?: number; name?: string; exercise_ids?: number[]; uebungen?: StartUebung[]; namen?: Record<number, string>; pausen?: Record<number, number> } | null>(null);
+  /** Gesetzt, wenn die Auskunft aus dem Vorrat stammt (offline). */
+  const [vorratAm, setVorratAm] = useState<string | null>(null);
+  const [startFehler, setStartFehler] = useState<string | null>(null);
+  const [bereitschaftZu, setBereitschaftZu] = useState(false);
+  const startAngestossen = useRef(false);
   const [namensAbfrage, setNamensAbfrage] = useState<string | null>(null);
   const [startingWorkout, setStartingWorkout] = useState(false);
   const [ladeFehler, setLadeFehler] = useState<string | null>(null);
@@ -49,6 +55,8 @@ export default function WorkoutPage() {
       pendingPlanDayId?: number;
       pendingExerciseIds?: number[];
       pendingUebungen?: StartUebung[];
+      pendingNamen?: Record<number, string>;
+      pendingPausen?: Record<number, number>;
     } | null;
     if (state && !id) {
       if (state.pendingName || state.pendingPlanDayId || state.pendingExerciseIds
@@ -58,6 +66,8 @@ export default function WorkoutPage() {
           plan_day_id: state.pendingPlanDayId,
           exercise_ids: state.pendingExerciseIds,
           uebungen: state.pendingUebungen,
+          namen: state.pendingNamen,
+          pausen: state.pendingPausen,
         });
         // Clear the navigation state so it doesn't re-trigger
         window.history.replaceState({}, '');
@@ -72,7 +82,7 @@ export default function WorkoutPage() {
       setLadeFehler(null);
       loadWorkout(parseInt(id)).catch((e) => setLadeFehler(String(e instanceof Error ? e.message : e)));
     } else {
-      api.get<PlanListItem[]>('/plans').then(setPlans);
+      api.get<PlanListItem[]>('/plans').then(setPlans).catch(() => {});
       // Dieselbe Auskunft wie auf der Startseite, seit dem 2026-10-24.
       // Vorher suchte sich diese Seite die am laengsten unberuehrte Region aus
       // ``/progress/muscle-freshness`` und bot "Rücken Training" an. Das war
@@ -81,8 +91,12 @@ export default function WorkoutPage() {
       // Ausruestung, und der Startknopf legte eine Sitzung mit Namen und
       // **ohne eine einzige Uebung** an.
       api.get<TrainingJetzt>('/training/jetzt')
-        .then(setJetzt)
-        .catch(() => {});
+        .then((j) => { setJetzt(j); setVorratAm(null); jetztMerken(j); })
+        .catch((e) => {
+          // Offline: der zuletzt gemerkte Vorschlag, mit seinem Stand.
+          const v = e instanceof NetzFehler ? jetztAusVorrat() : null;
+          if (v) { setJetzt(v.jetzt); setVorratAm(v.am); }
+        });
     }
   }, [id]);
 
@@ -139,12 +153,32 @@ export default function WorkoutPage() {
    * naechste Aenderung an diesem Satz ginge an eine Adresse, die es nicht gibt.
    */
   useEffect(() => aufIdAufloesung((ersatzId, echteId) => {
-    setWorkout(prev => prev
-      ? { ...prev, sets: prev.sets.map(s => s.id === ersatzId ? { ...s, id: echteId } : s) }
-      : prev);
+    setWorkout(prev => {
+      if (!prev) return prev;
+      if (prev.id === ersatzId) {
+        // Das offline begonnene Training ist beim Dienst angekommen: ab jetzt
+        // unter seiner echten Kennung, die lokale Kopie hat ausgedient.
+        lokalEntfernen(ersatzId);
+        navigate(`/workout/${echteId}`, { replace: true });
+        return { ...prev, id: echteId };
+      }
+      return { ...prev, sets: prev.sets.map(s => s.id === ersatzId ? { ...s, id: echteId } : s) };
+    });
   }), []);
 
+  // Offline begonnen: jede Aenderung in die lokale Kopie, damit ein Neuladen
+  // im Funkloch das Training nicht verliert.
+  useEffect(() => {
+    if (workout && workout.id < 0) lokalSpeichern(workout);
+  }, [workout]);
+
   async function loadWorkout(wid: number) {
+    if (wid < 0) {
+      const lokal = lokalLaden(wid);
+      if (!lokal) throw new Error('Dieses offline begonnene Training liegt nicht auf diesem Gerät');
+      setWorkout(lokal);
+      return;
+    }
     const w = await api.get<Workout>(`/workouts/${wid}`);
     setWorkout(w);
 
@@ -187,6 +221,8 @@ export default function WorkoutPage() {
       name: zustand.pendingName,
       plan_day_id: zustand.pendingPlanDayId,
       uebungen: zustand.pendingUebungen,
+      namen: zustand.pendingNamen,
+      pausen: zustand.pendingPausen,
     });
   }
 
@@ -201,46 +237,64 @@ export default function WorkoutPage() {
     }
   }
 
-  async function createWorkoutWithReadiness(readinessData: {
-    fatigue_level: number | null;
-    sleep_quality: number | null;
-    motivation: number | null;
-    pre_notes: string;
-  }) {
+  /**
+   * Legt die Einheit an. Ohne Netz geht der Start in die Warteschlange
+   * (``offlinetraining.ts``) und die Seite zeigt die lokale Kopie; bis
+   * 2026-11-21 blieb sie hier mit einem Fehler stehen.
+   */
+  async function anlegen(bereitschaft: Record<string, unknown>) {
     if (!pendingWorkout) return;
     setStartingWorkout(true);
-    meldungErlauben();
+    setStartFehler(null);
+    const rumpf = {
+      plan_day_id: pendingWorkout.plan_day_id ?? null,
+      name: pendingWorkout.name,
+      exercise_ids: pendingWorkout.exercise_ids ?? null,
+      uebungen: pendingWorkout.uebungen ?? null,
+      ...bereitschaft,
+    };
     try {
-      const w = await api.post<Workout>('/workouts', {
-        plan_day_id: pendingWorkout.plan_day_id ?? null,
-        name: pendingWorkout.name,
-        exercise_ids: pendingWorkout.exercise_ids ?? null,
-        uebungen: pendingWorkout.uebungen ?? null,
-        fatigue_level: readinessData.fatigue_level,
-        sleep_quality: readinessData.sleep_quality,
-        motivation: readinessData.motivation,
-        pre_notes: readinessData.pre_notes || null,
-      });
+      const w = await api.post<Workout>('/workouts', rumpf);
       navigate(`/workout/${w.id}`, { replace: true });
+    } catch (fehler) {
+      if (!(fehler instanceof NetzFehler)) {
+        setStartFehler(fehler instanceof Error ? fehler.message : String(fehler));
+        return;
+      }
+      try {
+        const lokal = offlineStarten({
+          name: pendingWorkout.name,
+          plan_day_id: pendingWorkout.plan_day_id,
+          uebungen: pendingWorkout.uebungen ?? [],
+          namen: pendingWorkout.namen ?? namenAus(jetzt).namen,
+          pausen: pendingWorkout.pausen ?? namenAus(jetzt).pausen,
+          bereitschaft,
+        });
+        navigate(`/workout/${lokal.id}`, { replace: true });
+      } catch (offlineFehler) {
+        setStartFehler(offlineFehler instanceof Error ? offlineFehler.message : String(offlineFehler));
+      }
     } finally {
       setStartingWorkout(false);
     }
   }
 
-  async function skipReadinessCheck() {
-    if (!pendingWorkout) return;
-    setStartingWorkout(true);
-    try {
-      const w = await api.post<Workout>('/workouts', {
-        plan_day_id: pendingWorkout.plan_day_id ?? null,
-        name: pendingWorkout.name,
-        exercise_ids: pendingWorkout.exercise_ids ?? null,
-        uebungen: pendingWorkout.uebungen ?? null,
-      });
-      navigate(`/workout/${w.id}`, { replace: true });
-    } finally {
-      setStartingWorkout(false);
-    }
+  /**
+   * Ein Tipp auf „Starten“ legt die Einheit an (seit 2026-11-21). Vorher
+   * stand der Bereitschafts-Check als eigener Bildschirm dazwischen; er ist
+   * jetzt eine freiwillige Zeile im Training (``BereitschaftZeile``).
+   */
+  useEffect(() => {
+    if (!isNew || !pendingWorkout || startAngestossen.current) return;
+    startAngestossen.current = true;
+    meldungErlauben();
+    void anlegen({});
+  }, [pendingWorkout, isNew]);
+
+  function bereitschaftSetzen(feld: 'fatigue_level' | 'sleep_quality' | 'motivation', wert: number) {
+    if (!workout) return;
+    setWorkout({ ...workout, [feld]: wert });
+    void api.putRobust(`/workouts/${workout.id}`, { [feld]: wert });
   }
 
   async function addSet(exerciseId: number, setType: string = 'normal', groupId?: string) {
@@ -431,13 +485,15 @@ export default function WorkoutPage() {
   async function finishWorkout() {
     if (!workout) return;
     await loeschenAbschicken();
-    await api.post(`/workouts/${workout.id}/finish`);
+    // Nachtragbar: wer im Funkloch beendet, verliert sonst das Ende.
+    await api.postNachtragbar(`/workouts/${workout.id}/finish`);
+    if (workout.id < 0) setWorkout({ ...workout, finished_at: new Date().toISOString() });
     setShowRating(true);
   }
 
   async function submitRating(rating: number) {
     if (!workout) return;
-    await api.put(`/workouts/${workout.id}`, { rating });
+    await api.putRobust(`/workouts/${workout.id}`, { rating });
     navigate('/');
   }
 
@@ -530,25 +586,26 @@ export default function WorkoutPage() {
     );
   }
 
-  // Readiness check screen
+  // Start laeuft (ein Tipp, kein Zwischenbildschirm mehr)
   if (isNew && !workout && pendingWorkout) {
     return (
       <div className="page fade-in">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <button
-            className="btn-secondary btn-sm"
-            onClick={() => setPendingWorkout(null)}
-            aria-label="Zurück"
-          >
-            &larr;
-          </button>
-          <h1 style={{ margin: 0 }}>Vor dem Training</h1>
-        </div>
-        <ReadinessCheck
-          onStart={createWorkoutWithReadiness}
-          onSkip={skipReadinessCheck}
-          loading={startingWorkout}
-        />
+        {startFehler ? (
+          <div className="leer">
+            Das Training ließ sich nicht starten ({startFehler}).{' '}
+            <button className="btn-secondary btn-sm" onClick={() => {
+              setStartFehler(null);
+              void anlegen({});
+            }}>Erneut versuchen</button>{' '}
+            <button className="btn-secondary btn-sm" onClick={() => {
+              setStartFehler(null);
+              startAngestossen.current = false;
+              setPendingWorkout(null);
+            }}>Zurück</button>
+          </div>
+        ) : (
+          <div className="leer">Training startet …</div>
+        )}
       </div>
     );
   }
@@ -567,6 +624,12 @@ export default function WorkoutPage() {
               {jetzt.quelle === 'plan' ? 'Nach Plan dran' : 'Vorschlag für heute'}
             </div>
             <div style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: 8 }}>{jetzt.titel}</div>
+            {vorratAm && (
+              <div className="klein gedaempft" style={{ marginBottom: 8 }}>
+                Ohne Netz: Vorschlag vom {new Date(vorratAm).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}.
+                Das Training wird nachgetragen, sobald wieder Netz da ist.
+              </div>
+            )}
             <div className="heute-uebungen">
               {jetzt.uebungen.map((u) => (
                 <div key={u.exercise_id} className="heute-uebung">
@@ -664,8 +727,17 @@ export default function WorkoutPage() {
         )}
       </div>
 
+      {isActive && !bereitschaftZu && !(workout.fatigue_level && workout.sleep_quality && workout.motivation) && (
+        <BereitschaftZeile
+          werte={{ fatigue_level: workout.fatigue_level, sleep_quality: workout.sleep_quality, motivation: workout.motivation }}
+          onWert={bereitschaftSetzen}
+          onSchliessen={() => setBereitschaftZu(true)}
+        />
+      )}
+
       {/* Pre-workout readiness data */}
-      {(workout.fatigue_level || workout.sleep_quality || workout.motivation || workout.pre_notes) && (
+      {(!isActive || bereitschaftZu || (workout.fatigue_level && workout.sleep_quality && workout.motivation))
+        && (workout.fatigue_level || workout.sleep_quality || workout.motivation || workout.pre_notes) && (
         <div className="card" style={{ marginBottom: 12 }}>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 8, fontWeight: 600 }}>
             Bereitschafts-Check

@@ -35,6 +35,8 @@ def _kanal_aus(monkeypatch):
 class _Sammler:
     """Attrappe des Publishers: merkt sich, was gesendet wuerde."""
 
+    konfiguriert = True
+
     def __init__(self, erfolg=True):
         self.gesendet: list[tuple[str, str, dict]] = []
         self._erfolg = erfolg
@@ -45,6 +47,9 @@ class _Sammler:
 
     def zustand(self):
         return {"konfiguriert": True, "gesendet": len(self.gesendet)}
+
+    def trennen(self):
+        self.getrennt = True
 
 
 @pytest.fixture
@@ -231,3 +236,75 @@ def test_endpunkt_trockenlauf(client, db_session, monkeypatch, sammler):
     assert r.status_code == 200
     assert "mandanten" in r.json()
     assert sammler.gesendet == []
+
+
+# --- Lauf im Container (Timer, ohne Token) ---
+
+def test_lauf_ohne_ausgang_scheitert_sichtbar(capsys):
+    """Ohne MQTT_HOST darf der Timer nicht gruen laufen: so blieb die
+    Erinnerung vom 12.09. bis 21.11. stumm, ohne dass es jemand sah."""
+    from app import anstoss_lauf
+    assert anstoss_lauf.main([]) == 2
+    assert "MQTT_HOST" in capsys.readouterr().err
+
+
+def test_lauf_trockenlauf_braucht_keinen_ausgang(client, db_session, monkeypatch, sammler, capsys):
+    from app import anstoss_lauf
+    client.post("/api/workouts", json={"name": "Damit ein Mandant existiert"})
+    db_session.commit()
+    assert anstoss_lauf.main(["--trockenlauf"]) == 0
+    assert '"mandanten"' in capsys.readouterr().out
+    assert sammler.gesendet == []
+
+
+def test_lauf_meldet_fehlschlag_mit_exit_1(client, db_session, monkeypatch):
+    from app import anstoss_lauf
+    import app.mqtt
+    kaputt = _Sammler(erfolg=False)
+    monkeypatch.setattr(app.mqtt, "publisher", kaputt)
+    monkeypatch.setattr(anstoss_lauf, "publisher", kaputt)
+    # Der Lauf oeffnet eigene Sessions; hier auf die Testdatenbank biegen.
+    from tests.conftest import TestSession
+    import app.mandant_ableiten
+    monkeypatch.setattr(anstoss, "SessionLocal", TestSession)
+    # Ein Mandant ohne Training: dem ist eine Erinnerung faellig.
+    monkeypatch.setattr(app.mandant_ableiten, "alle_mandanten", lambda: ["mandant-a"])
+    assert anstoss_lauf.main([]) == 1
+    assert kaputt.gesendet, "eine Erinnerung haette faellig sein muessen"
+    assert getattr(kaputt, "getrennt", False), "der Lauf muss die Verbindung sauber schliessen"
+
+
+def test_publish_ohne_bestaetigung_gilt_nicht_als_gesendet(monkeypatch):
+    """rc 0 heisst nur "in der Warteschlange". Ohne PUBACK ist nichts gesendet,
+    sonst haelt der Merker eine nie verschickte Erinnerung 20 h zurueck."""
+    import app.mqtt as mqtt_mod
+
+    class _Info:
+        rc = 0
+        def wait_for_publish(self, timeout=None):
+            pass
+        def is_published(self):
+            return False
+
+    class _Client:
+        def publish(self, *a, **k):
+            return _Info()
+
+    p = mqtt_mod.MqttPublisher()
+    monkeypatch.setattr(settings, "MQTT_HOST", "mosquitto")
+    p._client = _Client()
+    assert p.publish("training", "erinnerung", {}) is False
+    assert "Bestaetigung" in p.letzter_fehler
+
+
+def test_probe_ohne_ausgang_scheitert_sichtbar():
+    from app import anstoss_lauf
+    assert anstoss_lauf.main(["--probe"]) == 2
+
+
+def test_probe_meldet_fehlschlag(monkeypatch, capsys):
+    from app import anstoss_lauf
+    kaputt = _Sammler(erfolg=False)
+    monkeypatch.setattr(anstoss_lauf, "publisher", kaputt)
+    assert anstoss_lauf.main(["--probe"]) == 1
+    assert kaputt.gesendet[0][:2] == ("probe", "test")

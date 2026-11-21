@@ -9,21 +9,18 @@ app-proxy auch von aussen erreichbar.
 Der Weg von aussen wurde am 2026-09-12 abgeloest. Vorher fragte ein
 Bash-Skript den Dienst per curl ab, hielt Zustand in zwei Dateien und baute
 die Nutzlast mit Zeichenkettenersetzung in Python-Quelltext zusammen: ein
-Uebungsname mit drei Anfuehrungszeichen fuehrte dort Code aus. Jetzt ruft ein
-systemd-Timer nur noch diesen Endpunkt.
+Uebungsname mit drei Anfuehrungszeichen fuehrte dort Code aus. Seit dem 2026-11-21
+ruft der Timer ``python -m app.anstoss_lauf`` per ``docker exec``: ein Token in
+einer Datei am Wirt ist dann ueberfluessig, und der Endpunkt bleibt fuer andere
+Wege (gesperrt, solange kein Token gesetzt ist).
 """
 
 import hmac
-import logging
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 
 from app.config import settings
-from app.db import SessionLocal
-from app.mandant_ableiten import alle_mandanten
 from app.services import anstoss
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/anstoss", tags=["anstoss"])
 
@@ -43,30 +40,7 @@ def pruefen(trockenlauf: bool = Query(False)):
     """Alle Mandanten pruefen und Faelliges melden.
 
     ``trockenlauf=true`` zeigt, was gesendet wuerde, ohne zu senden und ohne
-    das Gedaechtnis fortzuschreiben.
+    das Gedaechtnis fortzuschreiben. Der Timer im Haus nimmt diesen Weg nicht
+    mehr, sondern ``python -m app.anstoss_lauf`` im Container (kein Token).
     """
-    from app.mqtt import publisher
-
-    mandanten = alle_mandanten()
-    ergebnis = {"mandanten": len(mandanten), "meldungen": [], "kanal": publisher.zustand()}
-
-    for sub in mandanten:
-        # Eigene Session je Mandant: das Scoping in app/tenant.py liest den
-        # Mandanten aus session.info, nicht aus dem Aufruf.
-        db = SessionLocal()
-        db.info["owner_sub"] = sub
-        try:
-            meldungen = anstoss.melden(db, sub, trockenlauf=trockenlauf)
-            if not trockenlauf:
-                db.commit()
-            for m in meldungen:
-                ergebnis["meldungen"].append({"owner_sub": sub, **m})
-        except Exception:
-            db.rollback()
-            # Ein Mandant mit kaputten Daten darf die uebrigen nicht aufhalten.
-            logger.warning("Anstoss fuer einen Mandanten fehlgeschlagen", exc_info=True)
-        finally:
-            db.close()
-
-    ergebnis["kanal"] = publisher.zustand()
-    return ergebnis
+    return anstoss.alle_pruefen(trockenlauf=trockenlauf)

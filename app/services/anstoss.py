@@ -18,13 +18,18 @@ sie in ``REGELN`` eintragen.
 
 from __future__ import annotations
 
+import logging
+
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
+from app.db import SessionLocal
 from app.models import AnstossMerker, PersonalRecord
 from app.services.progress import ProgressService
+
+logger = logging.getLogger(__name__)
 
 # Ab wie vielen Tagen ohne Training erinnert wird.
 PAUSE_TAGE = 3
@@ -174,4 +179,38 @@ def melden(db: Session, owner_sub: str, trockenlauf: bool = False) -> list[dict]
             _merken(db, meldung)
         ergebnis.append({"schluessel": meldung.schluessel, "gesendet": gesendet,
                          "nutzlast": nutzlast})
+    return ergebnis
+
+
+def alle_pruefen(trockenlauf: bool = False) -> dict:
+    """Alle Mandanten pruefen und Faelliges melden.
+
+    Gemeinsamer Weg fuer den Endpunkt und den Lauf im Container
+    (``app/anstoss_lauf.py``), damit beide dasselbe tun.
+    """
+    from app.mandant_ableiten import alle_mandanten
+    from app.mqtt import publisher
+
+    mandanten = alle_mandanten()
+    ergebnis = {"mandanten": len(mandanten), "meldungen": [], "kanal": publisher.zustand()}
+
+    for sub in mandanten:
+        # Eigene Session je Mandant: das Scoping in app/tenant.py liest den
+        # Mandanten aus session.info, nicht aus dem Aufruf.
+        db = SessionLocal()
+        db.info["owner_sub"] = sub
+        try:
+            meldungen = melden(db, sub, trockenlauf=trockenlauf)
+            if not trockenlauf:
+                db.commit()
+            for m in meldungen:
+                ergebnis["meldungen"].append({"owner_sub": sub, **m})
+        except Exception:
+            db.rollback()
+            # Ein Mandant mit kaputten Daten darf die uebrigen nicht aufhalten.
+            logger.warning("Anstoss fuer einen Mandanten fehlgeschlagen", exc_info=True)
+        finally:
+            db.close()
+
+    ergebnis["kanal"] = publisher.zustand()
     return ergebnis
